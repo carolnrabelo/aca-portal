@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACA — Portal de Aprendizagem</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0D0D0D;
+  --bg2: #141414;
+  --bg3: #1C1C1C;
+  --surface: #222222;
+  --surface2: #2A2A2A;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --ink: #F0EDE8;
+  --ink2: rgba(240,237,232,0.6);
+  --ink3: rgba(240,237,232,0.35);
+  --accent: #E8532A;
+  --accent2: #F0793A;
+  --gold: #D4A843;
+  --green: #3DAA6E;
+  --green2: #2D8A56;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+
+/* ── SCREENS ── */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ══════════════════════════════════════
+   REGISTRO
+══════════════════════════════════════ */
+#registro {
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+#registro::before {
+  content: '';
+  position: absolute;
+  top: -200px; right: -200px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(232,83,42,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+#registro::after {
+  content: '';
+  position: absolute;
+  bottom: -150px; left: -150px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(212,168,67,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.reg-inner {
+  max-width: 480px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  animation: fadeUp 0.6s ease;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.reg-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 48px;
+}
+.reg-logo-mark {
+  width: 40px; height: 40px;
+  background: var(--accent);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: white;
+}
+.reg-logo-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink2);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.reg-inner h1 {
+  font-size: clamp(32px, 6vw, 52px);
+  font-weight: 800;
+  line-height: 1.05;
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+.reg-inner h1 span { color: var(--accent); }
+.reg-inner p {
+  color: var(--ink2);
+  font-size: 15px;
+  font-weight: 300;
+  margin-bottom: 40px;
+  line-height: 1.7;
+}
+.reg-form { display: flex; flex-direction: column; gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink3);
+}
+.form-group input {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  transition: all 0.2s;
+  outline: none;
+}
+.form-group input:focus { border-color: var(--accent); background: var(--surface2); }
+.form-group input::placeholder { color: var(--ink3); }
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  padding: 16px 24px;
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.02em;
+  margin-top: 8px;
+}
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.reg-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 32px;
+}
+.reg-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--ink2);
+}
+.reg-pill-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* ══════════════════════════════════════
+   DASHBOARD / TRILHA
+══════════════════════════════════════ */
+#dashboard { background: var(--bg); }
+.dash-header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.dash-logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--accent);
+  letter-spacing: -0.01em;
+}
+.dash-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+.user-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: white;
+  flex-shrink: 0;
+}
+.user-name { font-size: 14px; font-weight: 500; color: var(--ink); }
+.user-level {
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.btn-ranking {
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--ink2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-ranking:hover { border-color: var(--accent); color: var(--accent); }
+
+.dash-body { flex: 1; max-width: 860px; margin: 0 auto; padding: 32px 24px 80px; width: 100%; }
+
+.xp-bar-wrap { margin-bottom: 32px; }
+.xp-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.xp-label { font-size: 12px; color: var(--ink3); letter-spacing: 0.06em; text-transform: uppercase; }
+.xp-val { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--gold); }
+.xp-bar-outer { height: 6px; background: var(--surface); border-radius: 3px; overflow: hidden; }
+.xp-bar-inner { height: 100%; background: linear-gradient(90deg, var(--accent), var(--gold)); border-radius: 3px; transition: width 0.6s ease; }
+
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 32px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; text-align: center; }
+.stat-num { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+.stat-lbl { font-size: 11px; color: var(--ink3); letter-spacing: 0.06em; text-transform: uppercase; }
+.stat-card.accent .stat-num { color: var(--accent); }
+.stat-card.gold .stat-num { color: var(--gold); }
+.stat-card.green .stat-num { color: var(--green); }
+
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 16px;
+}
+
+/* Módulos trilha */
+.modulos-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+.modulo-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.modulo-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--border);
+  transition: background 0.2s;
+}
+.modulo-card:hover:not(.locked):not(.marco) { border-color: var(--border2); background: var(--surface2); }
+.modulo-card:hover:not(.locked):not(.marco)::before { background: var(--accent); }
+.modulo-card.done::before { background: var(--green); }
+.modulo-card.active-mod::before { background: var(--accent); }
+.modulo-card.locked { opacity: 0.45; cursor: not-allowed; }
+.modulo-card.marco { cursor: default; border-color: rgba(212,168,67,0.2); background: rgba(212,168,67,0.04); }
+.modulo-card.marco::before { background: var(--gold); }
+
+.mod-icon {
+  width: 44px; height: 44px;
+  border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  background: var(--bg3);
+}
+.modulo-card.done .mod-icon { background: rgba(61,170,110,0.15); }
+.modulo-card.active-mod .mod-icon { background: rgba(232,83,42,0.15); }
+.modulo-card.marco .mod-icon { background: rgba(212,168,67,0.15); }
+.mod-info { flex: 1; }
+.mod-num { font-size: 11px; color: var(--ink3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 2px; }
+.mod-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--ink); line-height: 1.2; margin-bottom: 4px; }
+.mod-sub { font-size: 12px; color: var(--ink2); }
+.mod-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.mod-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.mod-badge.done-badge { background: rgba(61,170,110,0.2); color: var(--green); }
+.mod-badge.next-badge { background: rgba(232,83,42,0.2); color: var(--accent); }
+.mod-badge.lock-badge { background: var(--bg3); color: var(--ink3); }
+.mod-badge.marco-badge { background: rgba(212,168,67,0.15); color: var(--gold); }
+.mod-score { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--green); }
+
+/* Insígnias */
+.badges-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 32px; }
+.badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-width: 72px;
+  transition: all 0.2s;
+}
+.badge-item.earned { border-color: var(--gold); background: rgba(212,168,67,0.08); }
+.badge-item.earned:hover { transform: translateY(-2px); }
+.badge-icon { font-size: 28px; filter: grayscale(1); opacity: 0.3; }
+.badge-item.earned .badge-icon { filter: none; opacity: 1; }
+.badge-name { font-size: 10px; font-weight: 600; color: var(--ink3); letter-spacing: 0.04em; text-align: center; }
+.badge-item.earned .badge-name { color: var(--gold); }
+
+/* ══════════════════════════════════════
+   QUIZ
+══════════════════════════════════════ */
+#quiz { background: var(--bg); }
+.quiz-header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.quiz-mod-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+.quiz-progress-wrap { flex: 1; }
+.quiz-progress-outer { height: 4px; background: var(--surface); border-radius: 2px; overflow: hidden; margin-bottom: 4px; }
+.quiz-progress-inner { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s ease; }
+.quiz-progress-text { font-size: 11px; color: var(--ink3); }
+.btn-exit {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--ink3);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-exit:hover { border-color: var(--border2); color: var(--ink); }
+
+.quiz-body { flex: 1; max-width: 680px; margin: 0 auto; padding: 40px 24px 60px; width: 100%; }
+
+.q-header { margin-bottom: 28px; }
+.q-numero { font-size: 12px; color: var(--accent); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
+.q-texto { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 600; line-height: 1.4; color: var(--ink); }
+
+.options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  width: 100%;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+}
+.opt:hover:not(:disabled) { border-color: var(--border2); background: var(--surface2); }
+.opt:disabled { cursor: default; }
+.opt-letter {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink3);
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.opt-text { flex: 1; font-size: 14px; line-height: 1.55; padding-top: 4px; }
+.opt.correct { border-color: var(--green); background: rgba(61,170,110,0.08); }
+.opt.correct .opt-letter { background: var(--green); color: white; }
+.opt.wrong { border-color: #E24B4A; background: rgba(226,75,74,0.08); }
+.opt.wrong .opt-letter { background: #E24B4A; color: white; }
+.opt.dimmed { opacity: 0.35; }
+
+.feedback {
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  display: none;
+  animation: fadeUp 0.3s ease;
+}
+.feedback.show { display: block; }
+.feedback.ok { border: 1px solid rgba(61,170,110,0.3); background: rgba(61,170,110,0.08); }
+.feedback.err { border: 1px solid rgba(226,75,74,0.3); background: rgba(226,75,74,0.08); }
+.fb-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.fb-icon {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  color: white;
+  flex-shrink: 0;
+}
+.feedback.ok .fb-icon { background: var(--green); }
+.feedback.err .fb-icon { background: #E24B4A; }
+.fb-label { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.feedback.ok .fb-label { color: var(--green); }
+.feedback.err .fb-label { color: #E24B4A; }
+.fb-text { font-size: 13.5px; line-height: 1.65; color: var(--ink2); }
+.xp-earned {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(212,168,67,0.15);
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.btn-next {
+  width: 100%;
+  padding: 16px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: none;
+  letter-spacing: 0.01em;
+}
+.btn-next:hover { background: var(--accent2); }
+.btn-next.show { display: block; }
+
+/* ══════════════════════════════════════
+   RESULTADO DO MÓDULO
+══════════════════════════════════════ */
+#modulo-resultado {
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background: var(--bg);
+}
+.res-inner { max-width: 520px; width: 100%; }
+.res-top { text-align: center; margin-bottom: 36px; }
+.res-emoji { font-size: 56px; margin-bottom: 16px; display: block; }
+.res-top h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.01em; }
+.res-top p { color: var(--ink2); font-size: 15px; font-weight: 300; }
+
+.res-ring-wrap { display: flex; justify-content: center; margin-bottom: 28px; }
+.res-ring { position: relative; width: 140px; height: 140px; }
+.res-ring svg { width: 140px; height: 140px; transform: rotate(-90deg); }
+.res-ring-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.res-pct { font-family: 'Syne', sans-serif; font-size: 34px; font-weight: 800; line-height: 1; }
+.res-pct-label { font-size: 11px; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.06em; }
+
+.res-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 28px; }
+.res-stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; text-align: center; }
+.res-stat-n { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; }
+.res-stat-l { font-size: 11px; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.05em; }
+.res-stat.g .res-stat-n { color: var(--green); }
+.res-stat.r .res-stat-n { color: #E24B4A; }
+
+.bloqueado-msg {
+  background: rgba(226,75,74,0.08);
+  border: 1px solid rgba(226,75,74,0.2);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: var(--ink2);
+  line-height: 1.6;
+}
+.bloqueado-msg strong { color: #E24B4A; }
+
+.res-erros-section { margin-bottom: 24px; }
+.res-erros-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3); margin-bottom: 12px; }
+.res-erro-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  display: flex;
+  gap: 12px;
+}
+.res-erro-dot { width: 20px; height: 20px; border-radius: 50%; background: #E24B4A; display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; flex-shrink: 0; margin-top: 2px; }
+.res-erro-q { font-size: 13px; font-weight: 500; color: var(--ink); margin-bottom: 6px; line-height: 1.4; }
+.res-erro-g { font-size: 12px; color: var(--ink2); line-height: 1.55; padding: 8px 10px; background: var(--bg3); border-radius: 6px; }
+
+.res-actions { display: flex; flex-direction: column; gap: 10px; }
+.btn-continue {
+  padding: 16px;
+  background: var(--green);
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-continue:hover { background: var(--green2); }
+.btn-retry {
+  padding: 14px;
+  background: var(--surface);
+  color: var(--ink2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-lg);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-retry:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ══════════════════════════════════════
+   FORCA (MARCO)
+══════════════════════════════════════ */
+#forca-screen {
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background: var(--bg);
+}
+.forca-inner { max-width: 480px; width: 100%; text-align: center; animation: fadeUp 0.4s ease; }
+.forca-inner h2 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.01em; }
+.forca-inner p { color: var(--ink2); font-size: 14px; margin-bottom: 36px; font-weight: 300; line-height: 1.6; }
+.forca-word { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 32px; }
+.forca-letter {
+  width: 40px; height: 48px;
+  border-bottom: 2px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--accent);
+  text-transform: uppercase;
+  transition: all 0.3s;
+}
+.forca-letter.revealed { border-color: var(--accent); }
+.forca-letter.blank { color: transparent; }
+.forca-kbd { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 28px; }
+.forca-key {
+  width: 38px; height: 38px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--ink);
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+  text-transform: uppercase;
+}
+.forca-key:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); color: white; }
+.forca-key:disabled { opacity: 0.3; cursor: not-allowed; }
+.forca-key.hit { background: var(--green); border-color: var(--green); color: white; }
+.forca-key.miss { background: var(--bg3); border-color: var(--border); color: var(--ink3); }
+.forca-vidas { display: flex; gap: 6px; justify-content: center; margin-bottom: 24px; }
+.forca-vida { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); transition: all 0.3s; }
+.forca-vida.perdida { background: var(--surface); border: 1px solid var(--border); }
+.forca-hint { font-size: 13px; color: var(--ink3); margin-bottom: 16px; }
+.forca-success {
+  background: rgba(61,170,110,0.1);
+  border: 1px solid rgba(61,170,110,0.3);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: none;
+}
+.forca-success.show { display: block; }
+.forca-fail {
+  background: rgba(226,75,74,0.1);
+  border: 1px solid rgba(226,75,74,0.3);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: none;
+}
+.forca-fail.show { display: block; }
+
+/* ══════════════════════════════════════
+   RANKING
+══════════════════════════════════════ */
+#ranking-screen {
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background: var(--bg);
+}
+.ranking-inner { max-width: 520px; width: 100%; }
+.ranking-inner h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+.ranking-inner p { color: var(--ink2); font-size: 14px; margin-bottom: 32px; font-weight: 300; }
+.ranking-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  transition: all 0.2s;
+}
+.ranking-item.eu { border-color: var(--accent); background: rgba(232,83,42,0.06); }
+.ranking-pos { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; color: var(--ink3); min-width: 28px; }
+.ranking-pos.gold { color: var(--gold); }
+.ranking-pos.silver { color: #9BA3AA; }
+.ranking-pos.bronze { color: #CD7F32; }
+.ranking-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: white; flex-shrink: 0; }
+.ranking-info { flex: 1; }
+.ranking-name { font-weight: 500; font-size: 15px; color: var(--ink); }
+.ranking-progress { font-size: 12px; color: var(--ink3); }
+.ranking-xp { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--gold); }
+.btn-back {
+  padding: 14px 24px;
+  background: var(--surface);
+  color: var(--ink2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-lg);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+}
+.btn-back:hover { border-color: var(--border2); color: var(--ink); }
+.ranking-empty { text-align: center; padding: 40px; color: var(--ink3); font-size: 14px; }
+.ranking-sync { font-size: 12px; color: var(--ink3); text-align: center; margin-bottom: 16px; }
+.btn-share-xp {
+  padding: 10px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 16px;
+  width: 100%;
+  transition: all 0.15s;
+}
+.btn-share-xp:hover { background: var(--accent2); }
+
+/* ══════════════════════════════════════
+   CERTIFICADO
+══════════════════════════════════════ */
+#certificado-screen {
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+#confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; }
+.cert-inner { max-width: 600px; width: 100%; text-align: center; position: relative; z-index: 1; }
+.cert-emoji { font-size: 60px; margin-bottom: 20px; display: block; animation: bounce 1s ease infinite alternate; }
+@keyframes bounce { from { transform: scale(1); } to { transform: scale(1.1); } }
+.cert-inner h2 { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.02em; }
+.cert-inner h2 span { color: var(--accent); }
+.cert-inner p { color: var(--ink2); font-size: 15px; font-weight: 300; margin-bottom: 36px; line-height: 1.7; }
+.cert-card {
+  background: linear-gradient(135deg, #1C1C1C 0%, #222222 100%);
+  border: 1px solid rgba(212,168,67,0.3);
+  border-radius: var(--radius-xl);
+  padding: 40px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+}
+.cert-card::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(212,168,67,0.1) 0%, transparent 70%);
+}
+.cert-card::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; left: -40px;
+  width: 150px; height: 150px;
+  background: radial-gradient(circle, rgba(232,83,42,0.08) 0%, transparent 70%);
+}
+.cert-aca { font-size: 12px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+.cert-title { font-family: 'Syne', sans-serif; font-size: 14px; color: var(--ink2); margin-bottom: 20px; }
+.cert-name { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--ink); margin-bottom: 8px; }
+.cert-course { font-size: 14px; color: var(--ink2); margin-bottom: 20px; }
+.cert-sep { width: 60px; height: 2px; background: var(--accent); margin: 0 auto 20px; }
+.cert-date { font-size: 12px; color: var(--ink3); }
+.cert-stars { font-size: 24px; letter-spacing: 4px; margin-bottom: 16px; }
+.btn-cert {
+  width: 100%;
+  padding: 16px;
+  background: var(--gold);
+  color: #1A1200;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 10px;
+  letter-spacing: 0.01em;
+}
+.btn-cert:hover { transform: translateY(-2px); }
+.btn-dash-final {
+  width: 100%;
+  padding: 14px;
+  background: var(--surface);
+  color: var(--ink2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-lg);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-dash-final:hover { color: var(--ink); }
+
+/* Responsive */
+@media (max-width: 520px) {
+  .stats-row { grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .stat-num { font-size: 22px; }
+  .q-texto { font-size: 17px; }
+  .dash-logo { font-size: 16px; }
+  .res-stats { gap: 8px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<!-- ══ REGISTRO ══ -->
+<div id="registro" class="screen active">
+  <div class="reg-inner">
+    <div class="reg-logo">
+      <div class="reg-logo-mark">A</div>
+      <div class="reg-logo-text">Academia de Crescimento</div>
+    </div>
+    <h1>Portal de<br><span>Aprendizagem</span></h1>
+    <p>Bem-vindo ao embarque. Complete os módulos, ganhe XP e conquiste seu certificado da ACA.</p>
+    <div class="reg-form">
+      <div class="form-group">
+        <label>Seu nome completo</label>
+        <input type="text" id="input-nome" placeholder="Como aparecerá no certificado" maxlength="60" autocomplete="off"/>
+      </div>
+      <div class="form-group">
+        <label>Sua marca</label>
+        <input type="text" id="input-marca" placeholder="Ex: Geek, SAS, COC, Positivo..." maxlength="40" autocomplete="off"/>
+      </div>
+      <button class="btn-primary" id="btn-entrar" onclick="entrar()" disabled>Começar embarque →</button>
+    </div>
+    <div class="reg-pills">
+      <div class="reg-pill"><div class="reg-pill-dot"></div>13 módulos</div>
+      <div class="reg-pill"><div class="reg-pill-dot"></div>Progressão por desempenho</div>
+      <div class="reg-pill"><div class="reg-pill-dot"></div>Certificado ao final</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div id="dashboard" class="screen">
+  <div class="dash-header">
+    <div class="dash-logo">ACA</div>
+    <div style="flex:1; margin: 0 16px;">
+      <div class="xp-bar-outer"><div class="xp-bar-inner" id="hdr-xp-bar" style="width:0%"></div></div>
+    </div>
+    <button class="btn-ranking" onclick="showRanking()">🏆 Ranking</button>
+    <div class="dash-user">
+      <div class="user-avatar" id="dash-avatar">?</div>
+      <div>
+        <div class="user-name" id="dash-nome">—</div>
+        <div class="user-level" id="dash-level">Nível 1</div>
+      </div>
+    </div>
+  </div>
+  <div class="dash-body">
+    <div class="xp-bar-wrap">
+      <div class="xp-row">
+        <span class="xp-label">XP Total</span>
+        <span class="xp-val" id="dash-xp">0 XP</span>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card accent"><div class="stat-num" id="stat-modulos">0</div><div class="stat-lbl">Módulos</div></div>
+      <div class="stat-card gold"><div class="stat-num" id="stat-acertos">0%</div><div class="stat-lbl">Acertos</div></div>
+      <div class="stat-card green"><div class="stat-num" id="stat-badges">0</div><div class="stat-lbl">Insígnias</div></div>
+    </div>
+
+    <div class="section-label">Sua trilha</div>
+    <div class="modulos-list" id="modulos-list"></div>
+
+    <div class="section-label" style="margin-top:32px">Insígnias conquistadas</div>
+    <div class="badges-grid" id="badges-grid"></div>
+  </div>
+</div>
+
+<!-- ══ QUIZ ══ -->
+<div id="quiz" class="screen">
+  <div class="quiz-header">
+    <div class="quiz-mod-name" id="quiz-mod-name">—</div>
+    <div class="quiz-progress-wrap">
+      <div class="quiz-progress-outer"><div class="quiz-progress-inner" id="quiz-prog-bar" style="width:0%"></div></div>
+      <div class="quiz-progress-text" id="quiz-prog-text">1 de 5</div>
+    </div>
+    <button class="btn-exit" onclick="exitQuiz()">← Sair</button>
+  </div>
+  <div class="quiz-body">
+    <div class="q-header">
+      <div class="q-numero" id="q-numero">Questão 1</div>
+      <div class="q-texto" id="q-texto"></div>
+    </div>
+    <div class="options" id="options-list"></div>
+    <div class="feedback" id="feedback">
+      <div class="fb-top">
+        <div class="fb-icon" id="fb-icon"></div>
+        <span class="fb-label" id="fb-label"></span>
+      </div>
+      <div class="fb-text" id="fb-text"></div>
+      <div class="xp-earned" id="xp-earned" style="display:none">+10 XP</div>
+    </div>
+    <button class="btn-next" id="btn-next" onclick="nextQ()"></button>
+  </div>
+</div>
+
+<!-- ══ RESULTADO DO MÓDULO ══ -->
+<div id="modulo-resultado" class="screen">
+  <div class="res-inner">
+    <div class="res-top">
+      <span class="res-emoji" id="res-emoji"></span>
+      <h2 id="res-titulo"></h2>
+      <p id="res-sub"></p>
+    </div>
+    <div class="res-ring-wrap">
+      <div class="res-ring">
+        <svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="58" fill="none" stroke="#222" stroke-width="10"/><circle id="res-ring-circle" cx="70" cy="70" r="58" fill="none" stroke="#3DAA6E" stroke-width="10" stroke-linecap="round" stroke-dasharray="364.4" stroke-dashoffset="364.4"/></svg>
+        <div class="res-ring-num"><div class="res-pct" id="res-pct">0%</div><div class="res-pct-label">acertos</div></div>
+      </div>
+    </div>
+    <div class="res-stats">
+      <div class="res-stat g"><div class="res-stat-n" id="res-acertos">0</div><div class="res-stat-l">Acertos</div></div>
+      <div class="res-stat r"><div class="res-stat-n" id="res-erros">0</div><div class="res-stat-l">Erros</div></div>
+      <div class="res-stat"><div class="res-stat-n" id="res-xp-earned">0</div><div class="res-stat-l">XP ganho</div></div>
+    </div>
+    <div class="bloqueado-msg" id="bloqueado-msg" style="display:none"></div>
+    <div class="res-erros-section" id="res-erros-section" style="display:none">
+      <div class="res-erros-title">Questões para revisar</div>
+      <div id="res-erros-list"></div>
+    </div>
+    <div class="res-actions">
+      <button class="btn-continue" id="btn-continue" onclick="continuarTrilha()">Continuar trilha →</button>
+      <button class="btn-retry" id="btn-retry" onclick="repetirModulo()">Repetir este módulo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FORCA ══ -->
+<div id="forca-screen" class="screen">
+  <div class="forca-inner">
+    <div style="margin-bottom:20px; font-size:40px" id="forca-emoji"></div>
+    <h2 id="forca-titulo"></h2>
+    <p id="forca-desc"></p>
+    <div class="forca-vidas" id="forca-vidas"></div>
+    <div class="forca-hint" id="forca-hint"></div>
+    <div class="forca-word" id="forca-word"></div>
+    <div class="forca-kbd" id="forca-kbd"></div>
+    <div class="forca-success" id="forca-success">
+      <div style="font-size:28px;margin-bottom:8px">🎉</div>
+      <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--green);margin-bottom:6px">Desbloqueado!</div>
+      <div style="font-size:13px;color:var(--ink2)" id="forca-success-msg"></div>
+    </div>
+    <div class="forca-fail" id="forca-fail">
+      <div style="font-size:22px;margin-bottom:8px">💪</div>
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#E24B4A;margin-bottom:4px">Quase lá!</div>
+      <div style="font-size:13px;color:var(--ink2)">Tente de novo para desbloquear o próximo módulo.</div>
+    </div>
+    <button class="btn-primary" id="forca-btn" onclick="forcaAvancar()" style="display:none;width:100%;margin-top:16px"></button>
+    <button class="btn-retry" onclick="forcaReset()" id="forca-retry" style="margin-top:10px;display:none">Tentar novamente</button>
+  </div>
+</div>
+
+<!-- ══ RANKING ══ -->
+<div id="ranking-screen" class="screen">
+  <div class="ranking-inner">
+    <h2>🏆 Ranking da Turma</h2>
+    <p>Pontuação em tempo real — atualiza quando cada consultor compartilha o XP.</p>
+    <button class="btn-share-xp" onclick="compartilharXP()">📤 Publicar meu XP no ranking</button>
+    <div class="ranking-sync" id="ranking-sync"></div>
+    <div class="ranking-list" id="ranking-list"></div>
+    <button class="btn-back" onclick="showDash()">← Voltar à trilha</button>
+  </div>
+</div>
+
+<!-- ══ CERTIFICADO ══ -->
+<div id="certificado-screen" class="screen">
+  <div class="cert-inner">
+    <span class="cert-emoji">🏆</span>
+    <h2>Parabéns,<br><span id="cert-nome-dest"></span>!</h2>
+    <p>Você concluiu todos os módulos do embarque e está pronto para decolar. Essa conquista é só o começo.</p>
+    <div class="cert-card" id="cert-card">
+      <div class="cert-aca">Academia de Crescimento — Arco Educação</div>
+      <div class="cert-title">Certifica que</div>
+      <div class="cert-name" id="cert-nome-full"></div>
+      <div class="cert-course">concluiu com êxito o programa de formação<br><strong>Embarque de Consultores Educacionais</strong></div>
+      <div class="cert-sep"></div>
+      <div class="cert-stars">⭐⭐⭐⭐⭐</div>
+      <div class="cert-date" id="cert-data"></div>
+    </div>
+    <button class="btn-cert" onclick="baixarCertificado()">⬇ Baixar Certificado (PDF)</button>
+    <button class="btn-dash-final" onclick="showDash()">← Voltar ao portal</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   DADOS
+══════════════════════════════════════════════════════ */
+const MARCOS = {
+  sim_assistida: { senha: 'EVOLUÇÃO',    emoji: '🎭', titulo: 'Marco Presencial', desc: 'Você acabou de participar da simulação assistida. Para desbloquear o próximo módulo, descubra a palavra-chave que representa este momento.', hint: 'Dica: O que acontece quando a gente sai da zona de conforto?', successMsg: 'Próximo módulo desbloqueado! Continue sua trilha.' },
+  batepapo: { senha: 'CRESCIMENTO', emoji: '💬', titulo: 'Marco Presencial', desc: 'Você teve um bate-papo com o LDF. Para avançar, descubra a palavra que define essa etapa do embarque.', hint: 'Dica: O que a Arco quer para cada consultor ao longo da carreira?', successMsg: 'Incrível! Continue sua jornada.' },
+  sim_diagnostico: { senha: 'ENCANTAMENTO', emoji: '🔍', titulo: 'Marco Presencial', desc: 'Simulação de diagnóstico concluída! Descubra a palavra que define o que queremos causar em cada escola.', hint: 'Dica: O que a escola sente quando a visita é perfeita?', successMsg: 'Você está quase lá! Último módulo desbloqueado.' }
+};
+
+const TRILHA = [
+  { id:'t01', tipo:'quiz', titulo:'Jeito Arco de Vender', emoji:'🤝', xp:100,
+    questoes:[
+      { e:'A diretora diz que o material da Arco é mais caro que o da concorrência. Como você responde?', o:[{l:'A',t:'Explica que o preço é justificado pela qualidade superior do material.'},{l:'B',t:'Pergunta quanto ela paga hoje e faz uma comparação direta de valores.'},{l:'C',t:'Volta às dores mapeadas no diagnóstico e conecta o valor da solução ao problema de negócio dela — sem entrar em guerra de preço.',ok:true},{l:'D',t:'Oferece um desconto para remover a objeção.'}], g:'Preço é quase sempre uma objeção de valor, não de custo. Quando você conecta o investimento ao problema real da escola, o preço deixa de ser o centro da conversa.' },
+      { e:'Um professor fala na sua frente: "Ouvi dizer que o suporte da Arco é péssimo." Como você reage?', o:[{l:'A',t:'Nega diretamente e diz que a informação é falsa.'},{l:'B',t:'Acolhe o comentário, agradece a transparência e pergunta o que exatamente ele ouviu — para responder com precisão sem atacar a fonte.',ok:true},{l:'C',t:'Muda de assunto rapidamente para não dar espaço ao comentário.'},{l:'D',t:'Pede para o professor sair da reunião pois ele não é o decisor.'}], g:'Boatos não desaparecem quando você os nega — crescem. Acolher, investigar e responder com fatos é muito mais eficaz do que entrar em modo defensivo.' },
+      { e:'No final do trimestre você encontra uma escola que claramente não tem perfil para o seu produto. O que você faz?', o:[{l:'A',t:'Tenta fechar mesmo assim — qualquer contrato ajuda a bater meta.'},{l:'B',t:'Força a negociação com desconto máximo para viabilizar a venda.'},{l:'C',t:'Não avança — fechamento fora do perfil gera churn e prejudica a escola, a Arco e você mesmo a longo prazo.',ok:true},{l:'D',t:'Passa o lead para outro consultor e segue em frente.'}], g:'Fechamento fora do perfil não é vitória — é problema adiado. O consultor que protege a qualidade do fechamento protege também a própria carteira no ano seguinte.' },
+      { e:'Um fornecedor concorrente falou mal da Arco para a diretora antes de você chegar. Como você conduz?', o:[{l:'A',t:'Fala mal do concorrente em troca.'},{l:'B',t:'Ignora o comentário e segue apresentando seu produto normalmente.'},{l:'C',t:'Reconhece que ela recebeu uma perspectiva, não entra no mérito do concorrente, e pede espaço para mostrar como a Arco trabalha na prática — deixando os fatos falarem.',ok:true},{l:'D',t:'Pergunta o nome do consultor do concorrente para entender o contexto.'}], g:'Falar mal de concorrente nunca funciona — quem faz isso parece inseguro. A melhor resposta a um ataque é mostrar qualidade, não rebater.' },
+      { e:'Você fechou um contrato após negociação intensa, mas prometeu um nível de atendimento que o ticket talvez não inclua. O que deveria ter acontecido diferente?', o:[{l:'A',t:'Nada — fechar é o objetivo, o pós-venda é responsabilidade de outro time.'},{l:'B',t:'A negociação deveria ter sido feita com mais transparência sobre o que aquele ticket inclui — promessa inflada gera churn.',ok:true},{l:'C',t:'O consultor deveria ter pedido mais desconto para o ticket ficar dentro do padrão.'},{l:'D',t:'Nada — a escola vai se surpreender positivamente quando receber mais do que esperava.'}], g:'Fechar bem é fechar com honestidade sobre o que está sendo entregue. Promessa inflada no fechamento vira insatisfação no pós-venda e dano à sua reputação.' }
+    ]
+  },
+  { id:'t02', tipo:'quiz', titulo:'Negócio Escola + Personas', emoji:'🏫', xp:100,
+    questoes:[
+      { e:'O mantenedor raramente aparece mas toma a decisão final. A diretora está presente. Como você conduz a visita?', o:[{l:'A',t:'Faz toda a apresentação para a diretora e pede que ela repasse ao mantenedor.'},{l:'B',t:'Adia a visita até conseguir agendar diretamente com o mantenedor.'},{l:'C',t:'Conduz a visita com a diretora, mapeia as dores e já articula como envolver o mantenedor no próximo passo.',ok:true},{l:'D',t:'Apresenta o material e decide não mencionar o mantenedor para não complicar.'}], g:'Diretora e mantenedor têm papéis diferentes. Conduzir bem a primeira visita não significa ignorar o decisor — significa preparar o terreno para envolvê-lo no momento certo.' },
+      { e:'A escola menciona dificuldades financeiras e famílias em atraso. Você está apresentando uma solução core. O que faz?', o:[{l:'A',t:'Ignora o comentário e segue a apresentação.'},{l:'B',t:'Usa como gancho para investigar a situação financeira e, se fizer sentido, aciona a dupla Plus para apresentar o Isaac.',ok:true},{l:'C',t:'Oferece um desconto maior no material core para compensar.'},{l:'D',t:'Sugere que a escola resolva a inadimplência antes de trocar de sistema.'}], g:'Inadimplência é uma das dores mais comuns e uma abertura direta para o Isaac. Reconheça o gancho e acione quem vai aprofundar. Isso conta no resultado de todos.' },
+      { e:'Antes da visita você viu nas redes que a diretora postou comemorando 20 anos da escola. Como você usa isso?', o:[{l:'A',t:'Não usa — informações de redes sociais são pessoais demais para a conversa comercial.'},{l:'B',t:'Menciona logo no início para mostrar que pesquisou, criando conexão genuína com a história da escola antes de qualquer assunto comercial.',ok:true},{l:'C',t:'Guarda para o final da reunião como argumento de fechamento.'},{l:'D',t:'Usa para estimar o tamanho da escola e definir qual produto oferecer antes de chegar.'}], g:'Pesquisa prévia é uma das formas mais eficazes de criar rapport. Chegar sabendo a história da escola mostra interesse real e abre a conversa de forma muito mais natural.' },
+      { e:'A coordenadora pedagógica vai influenciar a decisão mas não estava na reunião. O que você faz?', o:[{l:'A',t:'Tenta fechar com quem está presente e assume que a coordenadora vai concordar.'},{l:'B',t:'Pede à diretora que inclua a coordenadora no próximo momento e estrutura os próximos passos para que ela possa participar.',ok:true},{l:'C',t:'Entra em contato diretamente com a coordenadora pelo LinkedIn antes da próxima visita.'},{l:'D',t:'Ignora o papel da coordenadora — quem decide é a direção, não ela.'}], g:'Influenciadores não decidem, mas podem barrar. Chegar na validação pedagógica sem quem realmente vai usar o material no dia a dia é um risco.' },
+      { e:'Você descobre que a escola vizinha concorrente foca em aprovação, mas a escola que você vai visitar enfatiza formação integral. Como isso muda sua abordagem?', o:[{l:'A',t:'Não muda nada — o material é o mesmo para as duas.'},{l:'B',t:'Adapta completamente o pit para conectar os diferenciais da marca ao que a escola valoriza — formação integral.',ok:true},{l:'C',t:'Menciona que outras escolas focam em aprovação para criar urgência.'},{l:'D',t:'Apresenta os dois perfis e deixa a escola escolher.'}], g:'Conhecer o perfil da escola antes de entrar é o que transforma uma visita genérica numa visita consultiva. O ângulo certo é o que ressoa com o que a escola acredita.' }
+    ]
+  },
+  { id:'t03', tipo:'quiz', titulo:'Perfis de Escola', emoji:'🗂️', xp:100,
+    questoes:[
+      { e:'Você usa o termo "ensino infantil" numa visita a uma escola de educação infantil. A diretora demonstra desconforto. O que aconteceu?', o:[{l:'A',t:'"Ensino infantil" e "educação infantil" são expressões equivalentes no mercado.'},{l:'B',t:'Você usou o termo errado. O correto é "educação infantil" — a distinção reflete uma diferença pedagógica real da BNCC e pode soar como despreparo.',ok:true},{l:'C',t:'A diretora preferiu uma linguagem mais informal — você pode seguir sem se preocupar.'},{l:'D',t:'Foi um erro de pronúncia sem impacto na percepção da escola.'}], g:'Nomenclatura importa. "Educação infantil" existe porque o foco é desenvolvimento integral — cuidar e educar juntos. Uma diretora apaixonada pela primeira infância percebe quando o interlocutor não domina isso.' },
+      { e:'Você visita uma escola grande e a secretária diz que a diretora está em reunião. Como você age?', o:[{l:'A',t:'Aguarda na recepção até a diretora terminar, mesmo que leve horas.'},{l:'B',t:'Deixa um folder e pede para reagendar sem insistir mais.'},{l:'C',t:'Usa o tempo de espera para mapear o ambiente, criar conexão com a secretária e levantar informações sobre a escola.',ok:true},{l:'D',t:'Pede para falar com o coordenador pedagógico diretamente, sem passar pela diretora.'}], g:'Em escolas grandes, o acesso ao decisor raramente acontece na primeira tentativa. Transformar a espera em investigação e a secretária em aliada é uma habilidade fundamental.' },
+      { e:'A escola se diz "focada em resultados acadêmicos" mas os murais são de projetos artísticos e as crianças estão em grupos colaborativos. O que você faz?', o:[{l:'A',t:'Acredita no que a escola disse e apresenta o material com foco em aprovação.'},{l:'B',t:'Aponta a contradição diretamente para mostrar que você observou bem.'},{l:'C',t:'Usa a contradição como ponto de investigação — pergunta mais sobre como a escola define "resultados" para entender o perfil real antes do pit.',ok:true},{l:'D',t:'Apresenta os dois ângulos do material e deixa a escola decidir.'}], g:'O que a escola diz que é nem sempre é o que ela pratica. Ler o ambiente é tão importante quanto ouvir o discurso. A pergunta certa abre uma conversa muito mais honesta.' },
+      { e:'Você visita uma escola pequena com menos de 150 alunos. A diretora diz que precisa conversar com "a gente" antes de decidir. Quem é "a gente"?', o:[{l:'A',t:'Provavelmente os professores — escolas pequenas são democráticas nas decisões.'},{l:'B',t:'Muito provavelmente os sócios ou mantenedores — em escolas pequenas as decisões costumam ser coletivas entre os donos.',ok:true},{l:'C',t:'Os pais — escolas de bairro tendem a ter conselhos de pais muito ativos.'},{l:'D',t:'Os coordenadores — em escolas pequenas eles têm mais poder do que em escolas grandes.'}], g:'"A gente" quase sempre significa os sócios ou familiares que administram juntos. O consultor que não mapeia quem são essas pessoas corre o risco de fazer uma apresentação perfeita para quem não tem poder de assinar.' },
+      { e:'Você está visitando escolas no interior. A diretora é muito receptiva e tem tempo para uma conversa longa. Como isso afeta sua abordagem?', o:[{l:'A',t:'Aproveita para fazer uma apresentação mais longa e detalhada do produto.'},{l:'B',t:'Usa o tempo adicional para aprofundar o diagnóstico — entender melhor a história da escola, os desafios regionais e o perfil das famílias — antes de partir para o pit.',ok:true},{l:'C',t:'Encurta a reunião para não perder tempo e visitar mais escolas no mesmo dia.'},{l:'D',t:'Aborda suplementares logo no início já que ela está receptiva.'}], g:'Mais tempo com a escola não é sinal para falar mais — é oportunidade para ouvir mais. Esse tempo é ouro para o diagnóstico.' }
+    ]
+  },
+  { id:'t04', tipo:'quiz', titulo:'Ecossistema Arco: Core', emoji:'📚', xp:100,
+    questoes:[
+      { e:'Uma escola pergunta se pode contratar apenas o Nave a Vela sem nenhum material core da Arco. Como você responde?', o:[{l:'A',t:'Sim, pode contratar qualquer suplementar independentemente.'},{l:'B',t:'Não, os suplementares só funcionam se integrados ao core tecnicamente.'},{l:'C',t:'Em geral, as soluções suplementares fazem mais sentido com um core Arco — mas depende da solução. O correto é verificar com a liderança antes de confirmar.',ok:true},{l:'D',t:'Sim, mas ela vai pagar mais caro por não ter o core.'}], g:'Nem todo suplementar exige core Arco, mas a regra geral é que eles se potencializam juntos. Confirmar com a liderança antes de prometer é a postura certa.' },
+      { e:'Uma escola que usa COC há anos pergunta qual a diferença para o SAS. Como você explica sem diminuir nenhuma das marcas?', o:[{l:'A',t:'Diz que o SAS é melhor e mais completo, então a escola deveria migrar.'},{l:'B',t:'Explica que são marcas com origens diferentes — COC veio por aquisição e passou por reformulação; o SAS é a marca de origem da Arco — ambas com excelência em aprovação, com diferenças no ritmo e consultoria.',ok:true},{l:'C',t:'Diz que são praticamente iguais e a diferença é só no preço.'},{l:'D',t:'Evita a comparação e muda o assunto para os suplementares.'}], g:'A resposta honesta que valoriza as duas marcas sem criar hierarquia desnecessária mostra domínio do ecossistema e passa mais segurança do que qualquer esquiva.' },
+      { e:'A diretora pergunta: "O que é exatamente esse tal de material core?" Como você explica sem jargão interno?', o:[{l:'A',t:'Diz que core é o material principal, diferente dos opcionais.'},{l:'B',t:'Explica que o sistema de ensino core é a espinha dorsal do currículo da escola — organiza todo o conteúdo pedagógico do ano, com material para aluno, professor e plataforma integrados. Os suplementares complementam com áreas específicas.',ok:true},{l:'C',t:'Mostra o catálogo e deixa a diretora tirar suas próprias conclusões.'},{l:'D',t:'Explica que core é o que todas as escolas que querem qualidade usam.'}], g:'A escola não conhece terminologia interna. Traduzir "core" para a linguagem do cotidiano dela é o que permite que ela entenda o valor do que está comprando.' },
+      { e:'Uma escola pequena, sem nenhum produto Arco, quer um suplementar de educação financeira mas está satisfeita com o material atual. Como você conduz?', o:[{l:'A',t:'Vende o suplementar isolado — qualquer entrada é uma entrada.'},{l:'B',t:'Recusa a conversa sobre suplementar e insiste que ela precisa primeiro trocar o material core.'},{l:'C',t:'Avança com o suplementar de forma consultiva — essa pode ser a porta de entrada para um relacionamento — e sinaliza internamente a oportunidade de core.',ok:true},{l:'D',t:'Apresenta o suplementar e o core ao mesmo tempo para maximizar a oportunidade.'}], g:'Escola sem core Arco que quer um suplementar é uma oportunidade de relacionamento. Entrar pelo suplementar, entregar bem e construir confiança é um caminho legítimo.' },
+      { e:'Você está apresentando o COC e o coordenador menciona que alunos de uma escola vizinha vão bem no ENEM com o SAS. O que você faz?', o:[{l:'A',t:'Muda imediatamente para apresentar o SAS.'},{l:'B',t:'Aproveita o gancho para aprofundar: pergunta qual o perfil de alunado em médio prazo e se há plano de expandir para ensino médio — e mantém o COC como foco por enquanto.',ok:true},{l:'C',t:'Ignora o comentário — a escola pediu COC e é isso que você vai apresentar.'},{l:'D',t:'Diz que COC e SAS são equivalentes para não criar confusão.'}], g:'Informação sobre marcas da própria casa é uma oportunidade de entender melhor o horizonte da escola, não de mudar o foco. O consultor que sabe ouvir e contextualizar mostra maturidade comercial.' }
+    ]
+  },
+  { id:'t05', tipo:'quiz', titulo:'Ecossistema Arco: Plus e F&G', emoji:'🚀', xp:120,
+    questoes:[
+      { e:'Você identificou que a escola perde alunos porque a concorrente lançou um programa bilíngue. Como você usa isso na conversa?', o:[{l:'A',t:'Fala mal do programa bilíngue da concorrência para desqualificá-lo.'},{l:'B',t:'Usa a informação para mostrar que a perda de alunos tem uma causa estrutural e abre uma conversa sobre como o portfólio Arco pode tornar a escola mais competitiva, acionando a dupla Plus para apresentar o bilíngue.',ok:true},{l:'C',t:'Ignora o bilíngue por enquanto e foca em resolver a mensalidade com desconto no core.'},{l:'D',t:'Registra no CRM e aguarda a escola pedir mais informações.'}], g:'Perda de aluno raramente é só preço. Quando você conecta a dor da escola com uma causa real e aciona o especialista Plus certo, você sai do lugar de vendedor e entra no de consultor estratégico.' },
+      { e:'A escola tem alta inadimplência e sonha em reformar a estrutura física mas não consegue capital. Você está apresentando o SAS. O que faz com essa informação?', o:[{l:'A',t:'Foca só no SAS e deixa a questão financeira para outra visita.'},{l:'B',t:'Usa a inadimplência como gancho para mencionar o Isaac — apresenta brevemente, deixa material e aciona o consultor Plus especializado.',ok:true},{l:'C',t:'Propõe um desconto maior no SAS para liberar capital para a reforma.'},{l:'D',t:'Evita tocar no assunto financeiro para não desviar da validação pedagógica.'}], g:'Inadimplência é uma das principais dores das escolas e o Isaac é a resposta direta. O consultor não precisa ser especialista em finanças — precisa reconhecer a oportunidade e acionar quem vai aprofundar.' },
+      { e:'Qual a diferença entre o PIES e a International School na hora de indicar para uma escola?', o:[{l:'A',t:'Não há diferença relevante — ambos são programas bilíngues equivalentes.'},{l:'B',t:'PIES é mais acessível e tem menos carga horária; International School é para escolas que querem imersão integral, com vivência internacional e material autoral.',ok:true},{l:'C',t:'International School é mais barato e por isso deve ser sempre a primeira opção.'},{l:'D',t:'A escolha deve ser baseada apenas no preço que a escola pode pagar.'}], g:'São propostas diferentes. PIES é ideal para escolas com grade horária menor e que precisam de acessibilidade. International School é para quem quer imersão real e vivência global, incluindo visitas à NASA.' },
+      { e:'A escola questiona: por que eu precisaria de um programa socioemocional se já tenho um bom material core?', o:[{l:'A',t:'Concorda que não há necessidade se o material core já é bom.'},{l:'B',t:'Explica que conteúdo e socioemocional não competem — um aluno pode dominar o conteúdo e travar numa prova por ansiedade. As 7 das 10 habilidades mais exigidas no futuro são competências humanas.',ok:true},{l:'C',t:'Diz que o socioemocional é obrigatório pela BNCC e a escola precisa ter.'},{l:'D',t:'Explica que é apenas uma moda do mercado que vai passar.'}], g:'Resultado não vem só de conhecimento acadêmico. Escola da Inteligência e Pleno atuam exatamente na lacuna emocional que o core não preenche — e isso impacta diretamente o desempenho e a retenção de alunos.' },
+      { e:'Por que as soluções Arco Plus contam integralmente para a meta do consultor core que fez a indicação?', o:[{l:'A',t:'Porque é uma cortesia da empresa para incentivar as indicações.'},{l:'B',t:'Porque estatisticamente escolas com mais de uma solução Arco têm maior retenção, e a Arco incentiva o consultor a pensar no ecossistema completo — não só na marca core.',ok:true},{l:'C',t:'Porque o consultor plus não precisa de toda a comissão.'},{l:'D',t:'Apenas algumas categorias de Plus contam para a meta do core.'}], g:'Escolas que usam mais de uma solução Arco permanecem mais anos na casa. A meta compartilhada não é cortesia — é uma estratégia para garantir que todos pensem no ecossistema completo da escola.' }
+    ]
+  },
+  { id:'t06', tipo:'quiz', titulo:'Funil de Vendas e Leads', emoji:'📊', xp:100,
+    questoes:[
+      { e:'Você fez uma excelente primeira visita. O que precisa acontecer obrigatoriamente antes de encerrar o dia?', o:[{l:'A',t:'Enviar um e-mail de agradecimento para a diretora.'},{l:'B',t:'Ligar para a liderança para contar como foi a visita.'},{l:'C',t:'Registrar a escola no CRM com as informações do diagnóstico e o próximo passo combinado — sem registro, a visita não existe para o funil.',ok:true},{l:'D',t:'Planejar a próxima visita com base no que foi combinado.'}], g:'CRM não é burocracia — é a memória do funil. Visita sem registro é oportunidade que pode se perder. O próximo passo precisa estar documentado para que todos consigam acompanhar e agir.' },
+      { e:'Uma escola entra em contato pelo site querendo saber o preço do material antes de qualquer reunião. Como você responde?', o:[{l:'A',t:'Manda a tabela de preços por e-mail para agilizar.'},{l:'B',t:'Diz que não pode passar preço sem antes entender o contexto, e propõe uma conversa rápida de 30 minutos.',ok:true},{l:'C',t:'Passa um preço estimado para criar interesse e ajusta na proposta formal.'},{l:'D',t:'Pede para a escola esperar o SDR entrar em contato.'}], g:'Preço sem diagnóstico é tiro no escuro para os dois lados. Converter o pedido de preço em uma conversa é o movimento de venda consultiva — e quase sempre funciona quando feito com naturalidade.' },
+      { e:'Você descobre que a escola tem 320 alunos no CRM mas a diretora informa que fecharam matrículas com 410. O que você faz?', o:[{l:'A',t:'Usa o número do CRM como base — é o dado oficial.'},{l:'B',t:'Atualiza o alunado no CRM com o número correto — dado desatualizado gera proposta errada.',ok:true},{l:'C',t:'Usa o número maior na proposta para aumentar o ACV.'},{l:'D',t:'Ignora a diferença — o número exato não muda muito a proposta.'}], g:'Alunado desatualizado gera proposta errada, que gera ajuste depois do fechamento, que gera desgaste com a escola. Corrigir no CRM quando você descobre o dado certo é parte do trabalho de campo.' },
+      { e:'A diretora adora o material, o preço fechou, mas ela precisa "apresentar para o conselho". O que indica que a escola está pronta para "ganho" no funil?', o:[{l:'A',t:'Quando a diretora disser verbalmente que vai fechar.'},{l:'B',t:'Quando o contrato estiver assinado por quem tem poder de decisão legal.'},{l:'C',t:'Quando todos os decisores tiverem validado e o próximo passo for apenas a assinatura formal.',ok:true},{l:'D',t:'Quando a escola parar de levantar objeções.'}], g:'Mover para "ganho" antes da hora infla o funil. A escola que ainda precisa "apresentar para o conselho" está em negociação — não em fechamento. O ganho real acontece quando quem decide já decidiu.' },
+      { e:'Você sai de uma visita muito bem, mas nos dias seguintes a escola some. O que você faz?', o:[{l:'A',t:'Aguarda a escola retornar — insistir pode parecer desesperado.'},{l:'B',t:'Manda uma mensagem formal perguntando se ainda há interesse.'},{l:'C',t:'Mantém contato ativo com gancho relevante, usa transparência — "Nossa, você sumiu, fiz algo errado?" — e aciona a liderança para pensar juntos uma estratégia de reaquecimento.',ok:true},{l:'D',t:'Registra como perdido no CRM e parte para outra escola.'}], g:'Lead esfriado não é lead perdido. A persistência com inteligência e o apoio do time é o que diferencia consultores que batem meta.' }
+    ]
+  },
+  { id:'t07', tipo:'quiz', titulo:'Agendamento', emoji:'📅', xp:80,
+    questoes:[
+      { e:'Você é consultor e vai fazer 30% dos seus agendamentos. Qual é o principal objetivo do seu contato de agendamento com a escola?', o:[{l:'A',t:'Apresentar o material e gerar interesse antes da visita.'},{l:'B',t:'Marcar a visita e passar o máximo de contexto possível para a escola antes do encontro.'},{l:'C',t:'Confirmar o agendamento, levantar informações iniciais da escola e passar um briefing rico para o consultor que vai visitar — ou para você mesmo se for o mesmo.',ok:true},{l:'D',t:'Qualificar se a escola tem potencial antes de investir tempo na visita.'}], g:'O agendamento bem feito já começa a construir rapport e garante que quem chegar na escola — você ou o SDR — tenha contexto suficiente para uma visita de qualidade.' },
+      { e:'A secretária diz que a diretora "decide tudo". Antes de confirmar o agendamento, o que você precisa investigar?', o:[{l:'A',t:'Nada — se a secretária disse que a diretora decide, é suficiente para agendar.'},{l:'B',t:'Se a diretora tem autonomia sobre material didático ou se há um mantenedor que também participa da decisão.',ok:true},{l:'C',t:'Quantos alunos a escola tem para saber se vale a pena agendar.'},{l:'D',t:'Se a escola já tem contato com algum outro fornecedor da Arco.'}], g:'Agendar com quem não decide é um erro clássico. Validar a autonomia do decisor antes de confirmar a visita aumenta muito a qualidade do agendamento.' },
+      { e:'A diretora pede um PDF com todas as informações do material antes de aceitar uma visita. Como você responde?', o:[{l:'A',t:'Manda o PDF imediatamente — é o que ela pediu.'},{l:'B',t:'Diz que não tem PDF disponível para enviar.'},{l:'C',t:'Reconhece o pedido, mas propõe uma conversa rápida para entender melhor o contexto da escola — assim o que ela recebe já é personalizado para ela, não genérico.',ok:true},{l:'D',t:'Manda o PDF e depois liga para agendar, usando o envio como gancho.'}], g:'PDF antes da conversa quase sempre vira desculpa para não agendar. Converter o pedido de material em uma conversa mantém o lead aquecido e o controle do processo na sua mão.' },
+      { e:'Uma escola confirmou a visita para quinta-feira. Na quarta, você liga para reconfirmar e ela cancela sem dar nova data. O que você registra e qual é o próximo passo?', o:[{l:'A',t:'Registra como cancelado e aguarda ela entrar em contato.'},{l:'B',t:'Registra o cancelamento com motivo, mantém a escola no funil e agenda follow-up para propor nova data dentro de 3 a 5 dias úteis.',ok:true},{l:'C',t:'Registra como perdido e passa para o próximo lead da lista.'},{l:'D',t:'Liga imediatamente para propor nova data antes de registrar qualquer coisa.'}], g:'Cancelamento não é perda — é um passo atrás no funil. Registrar bem e retomar rapidamente com proposta de nova data é o que diferencia quem gera pipeline de quem apenas agenda.' },
+      { e:'Qual a diferença de abordagem para um consultor que faz 30% dos próprios agendamentos comparado ao modelo onde só o SDR agenda?', o:[{l:'A',t:'Nenhuma — o processo de visita é exatamente igual independente de quem agendou.'},{l:'B',t:'No autoagendamento o consultor já sai com mais contexto da escola, pode personalizar a abordagem desde o primeiro contato e constrói rapport antes mesmo da visita presencial.',ok:true},{l:'C',t:'No autoagendamento o consultor pode pular o diagnóstico porque já conhece a escola.'},{l:'D',t:'No autoagendamento a escola já sabe o que quer, então o pitch deve ser mais direto.'}], g:'O consultor que agendou a própria visita já criou uma relação antes de chegar. Esse contexto prévio é um diferencial enorme — a escola não recebe um estranho, recebe alguém que já demonstrou interesse.' }
+    ]
+  },
+  { id:'t08', tipo:'marco', marcoId:'sim_assistida', titulo:'Simulação Assistida', emoji:'🎭', xp:50 },
+  { id:'t09', tipo:'quiz', titulo:'1ª Visita', emoji:'🚪', xp:120,
+    questoes:[
+      { e:'Você chega à escola e a diretora está visivelmente corrida — mal te cumprimentou. Como você abre a reunião?', o:[{l:'A',t:'Começa logo a apresentação para não tomar mais tempo dela.'},{l:'B',t:'Reconhece que ela parece estar num momento corrido, oferece adiar se necessário, e se ela quiser continuar propõe uma conversa mais leve para começar.',ok:true},{l:'C',t:'Faz de conta que não percebeu e segue o roteiro normalmente.'},{l:'D',t:'Pede para remarcar imediatamente para garantir a qualidade da reunião.'}], g:'Leitura de ambiente é uma habilidade essencial na primeira visita. Uma diretora tensa não está pronta para ouvir. Dar espaço e mostrar empatia é o que transforma um momento difícil em conexão.' },
+      { e:'Você pergunta sobre o engajamento dos alunos e a diretora responde: "Está ótimo, sem problemas." O que você faz?', o:[{l:'A',t:'Acredita e avança para o próximo tema.'},{l:'B',t:'Aprofunda com perguntas específicas: "Me conta um exemplo de quando você percebeu isso" ou "Como é o engajamento nos diferentes segmentos?" — para verificar se o "ótimo" é real.',ok:true},{l:'C',t:'Desafia a resposta diretamente dizendo que engajamento quase sempre tem pontos de melhoria.'},{l:'D',t:'Muda o tema para um onde ela provavelmente tenha mais dor.'}], g:'"Está ótimo" quase sempre significa que a escola ainda não parou para pensar sobre aquilo. A pergunta específica e o pedido de exemplo concreto são o que transforma uma resposta superficial numa conversa real.' },
+      { e:'A diretora diz que decide sozinha sobre material didático. Você suspeita que o mantenedor está envolvido. O que você faz?', o:[{l:'A',t:'Aceita a resposta e segue como se ela fosse a única decisora.'},{l:'B',t:'Contradiz a diretora dizendo que normalmente o mantenedor também participa.'},{l:'C',t:'Faz uma pergunta indireta: "Quando a escola tomou a última grande decisão de mudança, como foi esse processo?" — para entender o fluxo real sem questionar o que ela disse.',ok:true},{l:'D',t:'Pede para conhecer o mantenedor pessoalmente antes de avançar.'}], g:'Mapear decisores sem confrontar é uma arte. A pergunta sobre "a última grande decisão" abre o processo real sem colocar a diretora em posição defensiva.' },
+      { e:'A diretora pergunta sobre um aspecto técnico do material que você não domina. Como você responde?', o:[{l:'A',t:'Improvisa uma resposta para não parecer despreparado.'},{l:'B',t:'Diz que não sabe, anota a pergunta e se compromete a trazer a resposta precisa — seja pesquisando ou trazendo o especialista pedagógico.',ok:true},{l:'C',t:'Muda de assunto para um ponto que você domina melhor.'},{l:'D',t:'Diz que essa pergunta será respondida na validação pedagógica e avança.'}], g:'Honestidade sobre o que você não sabe gera mais confiança do que uma resposta improvisada. "Não sei, mas vou descobrir e trazer" — e cumprir — é o que consolida credibilidade.' },
+      { e:'No final de uma visita boa, a diretora diz "vou pensar e te falo" sem combinar nada. O que você faz?', o:[{l:'A',t:'Agradece e aguarda ela entrar em contato.'},{l:'B',t:'Insiste em fechar uma data antes de sair, mesmo que a diretora não queira.'},{l:'C',t:'Propõe um próximo passo concreto: "O que faria mais sentido como próxima etapa? Que tal já marcarmos um momento com o especialista pedagógico para você ver o material na prática?"',ok:true},{l:'D',t:'Envia uma proposta por e-mail logo depois para dar o passo seguinte.'}], g:'Visita sem próximo passo amarrado é visita que esfria. "Vou pensar" é cortesia, não compromisso. O consultor que sai com uma data mantém o controle do processo.' }
+    ]
+  },
+  { id:'t10', tipo:'marco', marcoId:'batepapo', titulo:'Bate-papo com LDF', emoji:'💬', xp:50 },
+  { id:'t11', tipo:'quiz', titulo:'BNCC', emoji:'📋', xp:100,
+    questoes:[
+      { e:'A diretora de uma escola de educação infantil comenta com orgulho que as crianças do G2 já fazem caligrafia e cobrem pontilhado. Como você reage?', o:[{l:'A',t:'Parabeniza e usa isso como argumento de que a escola é exigente.'},{l:'B',t:'Corrige a diretora explicando que isso vai contra a BNCC e pode prejudicar as crianças.'},{l:'C',t:'Acolhe o que ela disse, não confronta, e busca mostrar como o material da Arco trabalha o desenvolvimento motor de forma progressiva — deixando ela mesma perceber o contraste.',ok:true},{l:'D',t:'Ignora o comentário e segue para a apresentação do produto.'}], g:'Nunca confrontar a escola pelo que ela faz. A estratégia é mostrar como a Arco faz, com exemplos concretos, para que a escola mesma enxergue o caminho diferente.' },
+      { e:'Um diretor de ensino médio diz: "Eu não quero saber de itinerários formativos. Aqui o foco é vestibular." Como você conduz?', o:[{l:'A',t:'Concorda com ele para não criar atrito.'},{l:'B',t:'Explica que os itinerários são obrigatórios por lei e que a escola está descumprindo a BNCC.'},{l:'C',t:'Mostra como os itinerários do material da Arco aprofundam conteúdos de forma contextualizada e que dá para trabalhar vestibular e itinerário ao mesmo tempo.',ok:true},{l:'D',t:'Evita o assunto e deixa para o especialista pedagógico.'}], g:'A escola não vai mudar de posição por imposição. O caminho é mostrar, com exemplos reais do material, que os itinerários não concorrem com o vestibular — eles aprofundam o conteúdo de forma diferente.' },
+      { e:'A coordenadora pergunta: "Os conteúdos de ciências aparecem de novo no ano seguinte — isso não é repetição?" Como você explica?', o:[{l:'A',t:'Admite que há alguma repetição, mas que é intencional para fixação.'},{l:'B',t:'Explica que a BNCC trabalha em espiral — o mesmo conteúdo retorna com habilidades progressivamente mais complexas. O que muda não é o tema, mas o que o aluno precisa fazer com ele.',ok:true},{l:'C',t:'Diz que o material segue rigorosamente a BNCC e ela pode consultar o documento para confirmar.'},{l:'D',t:'Redireciona para outro aspecto do material para não entrar num tema técnico.'}], g:'A espiralidade da BNCC é um diferencial real do material e um argumento pedagógico forte. "Antes o aluno só identificava, agora ele precisa comparar e analisar" — isso encanta.' },
+      { e:'Uma escola que usa terminologia errada para segmentos escolares vai solicitar uma apresentação. Como você se prepara?', o:[{l:'A',t:'Usa a mesma terminologia da escola para não criar atrito.'},{l:'B',t:'Usa sempre a terminologia correta desde o início: "educação infantil" (não ensino infantil), "anos iniciais/finais" (não fundamental 1 e 2), "campos de experiência" na educação infantil.',ok:true},{l:'C',t:'Pergunta à escola qual terminologia preferem usar antes de começar.'},{l:'D',t:'Não se preocupa com isso — a terminologia não afeta a percepção de competência.'}], g:'Usar a nomenclatura correta demonstra domínio pedagógico e cria credibilidade. Uma diretora apaixonada pela primeira infância percebe imediatamente quando o interlocutor não domina isso.' },
+      { e:'Uma escola reclama que os alunos estão desengajados. O diretor culpa a geração. Como você usa isso?', o:[{l:'A',t:'Concorda com o diretor para criar rapport.'},{l:'B',t:'Pede para ele dar um exemplo específico de quando percebeu o desengajamento, vai aprofundando com perguntas e depois mostra como o material da Arco trabalha aquele ponto diferente.',ok:true},{l:'C',t:'Explica que o problema é pedagógico e a responsabilidade é da escola, não dos alunos.'},{l:'D',t:'Propõe uma validação pedagógica imediatamente para mostrar o material na prática.'}], g:'"Me conta mais" é uma das frases mais poderosas da visita consultiva. Perguntas específicas levam o diretor a abrir o problema concreto — e aí você conecta com algo real que o material resolve.' }
+    ]
+  },
+  { id:'t12', tipo:'marco', marcoId:'sim_diagnostico', titulo:'Simulação de Diagnóstico', emoji:'🔍', xp:50 },
+  { id:'t13', tipo:'quiz', titulo:'Planejamento de Rota e Como Ganhar o Jogo', emoji:'🗺️', xp:150,
+    questoes:[
+      { e:'Você tem 40 escolas em 8 cidades. Como você decide por onde começar a planejar sua rota?', o:[{l:'A',t:'Começa pelas cidades com mais escolas na carteira.'},{l:'B',t:'Filtra escolas com vigência 2024 e 2025, cruza com alunado e ACV potencial, e prioriza as cidades que concentram mais escolas de alta prioridade.',ok:true},{l:'C',t:'Escolhe as cidades mais próximas da sua base para economizar deslocamento.'},{l:'D',t:'Deixa a liderança definir a rota e só depois preenche o template.'}], g:'O mapa de ataque existe para tomar decisões estratégicas. Cruzar vigência, alunado e ACV é o que transforma uma lista de escolas em uma rota inteligente.' },
+      { e:'Na hora de apresentar seu planejamento de rota para a liderança, o que precisa estar claro além dos nomes das escolas?', o:[{l:'A',t:'Apenas as escolas e os dias previstos de visita.'},{l:'B',t:'O critério que você usou para priorizar aquelas escolas — vigência, alunado, fase no funil, potencial de ACV — para que a liderança consiga validar se a lógica faz sentido.',ok:true},{l:'C',t:'O roteiro completo de perguntas que você vai fazer em cada escola.'},{l:'D',t:'O valor estimado de fechamento de cada escola para justificar o deslocamento.'}], g:'Apresentar rota sem critério é apresentar uma lista. O que a liderança precisa validar é o raciocínio por trás. Quanto mais claro o critério, mais útil a conversa de validação.' },
+      { e:'Você tem escolas em diferentes fases do funil. Como isso afeta o planejamento da rota?', o:[{l:'A',t:'Não afeta — a rota deve ser montada só com escolas novas para abrir mais oportunidades.'},{l:'B',t:'As escolas mais avançadas no funil devem ser priorizadas — estão mais próximas do fechamento e precisam de continuidade. As novas entram para completar os dias de acordo com a logística.',ok:true},{l:'C',t:'As escolas novas sempre têm prioridade porque representam crescimento de carteira.'},{l:'D',t:'A divisão entre novas e avançadas é responsabilidade da liderança definir.'}], g:'Escola avançada no funil esfria se não tiver continuidade. O bom planejamento equilibra as duas frentes: mantém o calor nas que já estão andando e abre novas oportunidades nos intervalos.' },
+      { e:'Você está na primeira visita com uma diretora satisfeita com o material atual e diz que tudo está bem. Como você revela dores reais?', o:[{l:'A',t:'Apresenta o material da Arco imediatamente para mostrar o que ela está perdendo.'},{l:'B',t:'Faz perguntas abertas como "Se você pudesse mudar algo na escola agora, o que seria?" e "Como foi seu processo de matrícula comparado ao ano passado?"',ok:true},{l:'C',t:'Aceita que a escola está bem e foca em mostrar os diferenciais do produto.'},{l:'D',t:'Pergunta diretamente qual é o material atual e qual é a vigência do contrato.'}], g:'A investigação consultiva começa com perguntas que permitem a escola pensar no próprio cenário. Quando o consultor deixa a escola falar, ela mesma revela as dores.' },
+      { e:'Você está atendendo uma escola com o Geek e identifica perfil para bilíngue e socioemocional, mas você não domina esses produtos. O que você faz?', o:[{l:'A',t:'Apresenta superficialmente os dois produtos para não perder a oportunidade no momento.'},{l:'B',t:'Faz o pitch simples do que identificou, aciona a dupla Plus especializada para entrar junto ou online ainda na visita, e garante que o próximo passo já saia amarrado.',ok:true},{l:'C',t:'Deixa para mencionar os suplementares apenas se a escola perguntar.'},{l:'D',t:'Indica internamente e aguarda o consultor Plus entrar em contato por conta própria.'}], g:'O consultor core não precisa ser especialista em tudo — precisa identificar a oportunidade e acionar quem sabe. Fazer isso com agilidade é o que gera crossell real. E tudo que fechar conta no seu resultado.' }
+    ]
+  }
+];
+
+const BADGES_DEF = [
+  { id:'primeiro_passo', nome:'Decolagem', emoji:'🚀', desc:'Completou o primeiro módulo' },
+  { id:'meia_trilha', nome:'Meio caminho', emoji:'🏃', desc:'5 módulos concluídos' },
+  { id:'perfeito', nome:'Gabarito', emoji:'💯', desc:'100% em qualquer módulo' },
+  { id:'persistente', nome:'Persistente', emoji:'💪', desc:'Repetiu e passou em um módulo' },
+  { id:'trilha_completa', nome:'Concluído', emoji:'🏆', desc:'Todos os módulos da trilha' },
+  { id:'forca_mestre', nome:'Forca Mestre', emoji:'🔤', desc:'Desbloqueou todos os marcos' },
+];
+
+/* ══════════════════════════════════════════════════════
+   ESTADO
+══════════════════════════════════════════════════════ */
+let state = {
+  nome: '', marca: '',
+  xp: 0, nivel: 1,
+  modulos: {}, // id -> { tentativas, melhorScore, concluido, desbloqueado }
+  badges: [],
+  ranking: [], // array de {nome, xp, marca, ts}
+  iniciado: new Date().toISOString()
+};
+
+let quizState = {
+  moduloId: null,
+  questoes: [],
+  idx: 0,
+  acertos: 0,
+  erros: [],
+  respondeu: false
+};
+
+let forcaState = {
+  marcoId: null,
+  palavra: '',
+  letrasCorretas: new Set(),
+  letrasErradas: new Set(),
+  vidas: 6,
+  concluido: false
+};
+
+/* ══════════════════════════════════════════════════════
+   PERSISTÊNCIA LOCAL
+══════════════════════════════════════════════════════ */
+function salvar() {
+  try { localStorage.setItem('aca_portal_state', JSON.stringify(state)); } catch(e) {}
+}
+function carregar() {
+  try {
+    const s = localStorage.getItem('aca_portal_state');
+    if (s) state = { ...state, ...JSON.parse(s) };
+  } catch(e) {}
+}
+
+/* ══════════════════════════════════════════════════════
+   REGISTRO
+══════════════════════════════════════════════════════ */
+document.getElementById('input-nome').addEventListener('input', validarReg);
+document.getElementById('input-marca').addEventListener('input', validarReg);
+function validarReg() {
+  const n = document.getElementById('input-nome').value.trim();
+  const m = document.getElementById('input-marca').value.trim();
+  document.getElementById('btn-entrar').disabled = n.length < 2 || m.length < 1;
+}
+function entrar() {
+  state.nome = document.getElementById('input-nome').value.trim();
+  state.marca = document.getElementById('input-marca').value.trim();
+  inicializarModulos();
+  salvar();
+  showDash();
+}
+
+/* ══════════════════════════════════════════════════════
+   INICIALIZAR MÓDULOS
+══════════════════════════════════════════════════════ */
+function inicializarModulos() {
+  TRILHA.forEach((m, i) => {
+    if (!state.modulos[m.id]) {
+      state.modulos[m.id] = { tentativas: 0, melhorScore: 0, concluido: false, desbloqueado: i === 0 };
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   TELAS
+══════════════════════════════════════════════════════ */
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function showDash() {
+  renderDash();
+  show('dashboard');
+}
+function showRanking() {
+  renderRanking();
+  show('ranking-screen');
+}
+
+/* ══════════════════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════════════════ */
+function nivel() {
+  const xp = state.xp;
+  if (xp < 200) return { n:1, label:'Novato' };
+  if (xp < 450) return { n:2, label:'Aprendiz' };
+  if (xp < 750) return { n:3, label:'Consultor' };
+  if (xp < 1100) return { n:4, label:'Sênior' };
+  return { n:5, label:'Expert Arco' };
+}
+function xpParaProxNivel() {
+  const xp = state.xp;
+  const limites = [200, 450, 750, 1100, 9999];
+  const bases = [0, 200, 450, 750, 1100];
+  const n = nivel().n - 1;
+  return { atual: xp - bases[n], total: limites[n] - bases[n] };
+}
+
+function renderDash() {
+  const nv = nivel();
+  const ini = document.getElementById('dash-avatar');
+  const partes = state.nome.split(' ');
+  ini.textContent = partes[0][0] + (partes[1] ? partes[1][0] : '');
+  document.getElementById('dash-nome').textContent = state.nome;
+  document.getElementById('dash-level').textContent = `Nível ${nv.n} · ${nv.label}`;
+  document.getElementById('dash-xp').textContent = `${state.xp} XP`;
+  const xpP = xpParaProxNivel();
+  const pct = Math.min(100, Math.round(xpP.atual / xpP.total * 100));
+  document.getElementById('hdr-xp-bar').style.width = pct + '%';
+
+  const concluidos = TRILHA.filter(m => state.modulos[m.id]?.concluido).length;
+  document.getElementById('stat-modulos').textContent = `${concluidos}/${TRILHA.length}`;
+  const totalAcertos = Object.values(state.modulos).reduce((a,m) => a + (m.melhorScore || 0), 0);
+  const totalPossivel = TRILHA.filter(m => m.tipo === 'quiz').reduce((a,m) => a + m.questoes.length, 0);
+  const pctAcertos = totalPossivel > 0 ? Math.round(totalAcertos / totalPossivel * 100) : 0;
+  document.getElementById('stat-acertos').textContent = pctAcertos + '%';
+  document.getElementById('stat-badges').textContent = state.badges.length;
+
+  renderModulos();
+  renderBadges();
+}
+
+function renderModulos() {
+  const list = document.getElementById('modulos-list');
+  list.innerHTML = '';
+  TRILHA.forEach((m, i) => {
+    const ms = state.modulos[m.id] || {};
+    const concluido = ms.concluido;
+    const desbloqueado = ms.desbloqueado;
+    const isMarco = m.tipo === 'marco';
+    const isNext = desbloqueado && !concluido;
+
+    const div = document.createElement('div');
+    div.className = `modulo-card ${concluido ? 'done' : ''} ${isNext && !concluido ? 'active-mod' : ''} ${!desbloqueado ? 'locked' : ''} ${isMarco ? 'marco' : ''}`;
+
+    let badge = '';
+    let scoreInfo = '';
+    if (concluido) {
+      badge = '<span class="mod-badge done-badge">✓ Concluído</span>';
+      if (m.tipo === 'quiz') {
+        const pct = Math.round(ms.melhorScore / m.questoes.length * 100);
+        scoreInfo = `<span class="mod-score">${pct}%</span>`;
+      }
+    } else if (!desbloqueado) {
+      badge = '<span class="mod-badge lock-badge">🔒 Bloqueado</span>';
+    } else if (isMarco) {
+      badge = '<span class="mod-badge marco-badge">⭐ Marco</span>';
+    } else {
+      badge = '<span class="mod-badge next-badge">→ Disponível</span>';
+    }
+
+    div.innerHTML = `
+      <div class="mod-icon">${m.emoji}</div>
+      <div class="mod-info">
+        <div class="mod-num">Módulo ${String(i+1).padStart(2,'0')}</div>
+        <div class="mod-title">${m.titulo}</div>
+        <div class="mod-sub">${m.tipo === 'quiz' ? `${m.questoes.length} questões · ${m.xp} XP` : `Marco presencial · ${m.xp} XP`}</div>
+      </div>
+      <div class="mod-right">${badge}${scoreInfo}</div>`;
+
+    if (desbloqueado && !concluido) {
+      div.onclick = () => iniciarModulo(m.id);
+    } else if (concluido && m.tipo === 'quiz') {
+      div.onclick = () => iniciarModulo(m.id);
+      div.title = 'Clique para repetir';
+    }
+    list.appendChild(div);
+  });
+}
+
+function renderBadges() {
+  const grid = document.getElementById('badges-grid');
+  grid.innerHTML = '';
+  BADGES_DEF.forEach(b => {
+    const earned = state.badges.includes(b.id);
+    const div = document.createElement('div');
+    div.className = `badge-item ${earned ? 'earned' : ''}`;
+    div.title = b.desc;
+    div.innerHTML = `<div class="badge-icon">${b.emoji}</div><div class="badge-name">${b.nome}</div>`;
+    grid.appendChild(div);
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   QUIZ
+══════════════════════════════════════════════════════ */
+function iniciarModulo(id) {
+  const m = TRILHA.find(x => x.id === id);
+  if (!m) return;
+  if (m.tipo === 'marco') { iniciarMarco(m); return; }
+  quizState = { moduloId: id, questoes: shuffle([...m.questoes]), idx: 0, acertos: 0, erros: [], respondeu: false };
+  document.getElementById('quiz-mod-name').textContent = m.titulo;
+  renderQ();
+  show('quiz');
+}
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+function renderQ() {
+  const q = quizState.questoes[quizState.idx];
+  const total = quizState.questoes.length;
+  const pct = Math.round((quizState.idx) / total * 100);
+  document.getElementById('quiz-prog-bar').style.width = pct + '%';
+  document.getElementById('quiz-prog-text').textContent = `${quizState.idx + 1} de ${total}`;
+  document.getElementById('q-numero').textContent = `Questão ${quizState.idx + 1}`;
+  document.getElementById('q-texto').textContent = q.e;
+
+  const opts = shuffle([...q.o]);
+  const list = document.getElementById('options-list');
+  list.innerHTML = '';
+  opts.forEach(o => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.innerHTML = `<span class="opt-letter">${o.l}</span><span class="opt-text">${o.t}</span>`;
+    btn.onclick = () => responder(o, opts, q);
+    list.appendChild(btn);
+  });
+
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback';
+  const next = document.getElementById('btn-next');
+  next.className = 'btn-next';
+  document.getElementById('xp-earned').style.display = 'none';
+  quizState.respondeu = false;
+}
+
+function responder(chosen, allOpts, q) {
+  if (quizState.respondeu) return;
+  quizState.respondeu = true;
+  const isOk = chosen.ok === true;
+
+  document.querySelectorAll('.opt').forEach(btn => {
+    btn.disabled = true;
+    const letter = btn.querySelector('.opt-letter').textContent;
+    const opt = allOpts.find(o => o.l === letter);
+    if (opt?.ok) btn.classList.add('correct');
+    else if (opt?.l === chosen.l && !isOk) btn.classList.add('wrong');
+    else btn.classList.add('dimmed');
+  });
+
+  const fb = document.getElementById('feedback');
+  const xpEl = document.getElementById('xp-earned');
+  if (isOk) {
+    quizState.acertos++;
+    fb.className = 'feedback ok show';
+    document.getElementById('fb-icon').textContent = '✓';
+    document.getElementById('fb-label').textContent = 'Isso aí!';
+    xpEl.style.display = 'inline-flex';
+    xpEl.textContent = '+10 XP';
+    state.xp += 10;
+  } else {
+    quizState.erros.push({ q: q.e, g: q.g, correct: allOpts.find(o=>o.ok) });
+    fb.className = 'feedback err show';
+    document.getElementById('fb-icon').textContent = '✕';
+    document.getElementById('fb-label').textContent = `Resposta correta: alternativa ${allOpts.find(o=>o.ok)?.l}`;
+  }
+  document.getElementById('fb-text').textContent = q.g;
+
+  const next = document.getElementById('btn-next');
+  next.className = 'btn-next show';
+  next.textContent = quizState.idx < quizState.questoes.length - 1 ? 'Próxima questão →' : 'Ver resultado';
+  salvar();
+}
+
+function nextQ() {
+  quizState.idx++;
+  if (quizState.idx >= quizState.questoes.length) {
+    mostrarResultado();
+  } else {
+    renderQ();
+  }
+}
+
+function exitQuiz() {
+  if (confirm('Sair do quiz? Seu progresso neste módulo não será salvo.')) showDash();
+}
+
+/* ══════════════════════════════════════════════════════
+   RESULTADO DO MÓDULO
+══════════════════════════════════════════════════════ */
+function mostrarResultado() {
+  const m = TRILHA.find(x => x.id === quizState.moduloId);
+  const total = quizState.questoes.length;
+  const acertos = quizState.acertos;
+  const pct = Math.round(acertos / total * 100);
+  const passou = pct >= 75;
+
+  // Atualizar estado
+  const ms = state.modulos[quizState.moduloId] || {};
+  ms.tentativas = (ms.tentativas || 0) + 1;
+  const prevScore = ms.melhorScore || 0;
+  ms.melhorScore = Math.max(prevScore, acertos);
+
+  const xpModulo = passou && !ms.concluido ? m.xp : passou ? Math.round(m.xp * 0.3) : 0;
+  state.xp += xpModulo;
+
+  if (passou) {
+    ms.concluido = true;
+    if (ms.tentativas > 1 && prevScore < acertos) ganharBadge('persistente');
+    if (pct === 100) ganharBadge('perfeito');
+
+    const concluidos = TRILHA.filter(x => state.modulos[x.id]?.concluido).length;
+    if (concluidos === 1) ganharBadge('primeiro_passo');
+    if (concluidos >= 5) ganharBadge('meia_trilha');
+
+    // Desbloquear próximo
+    const idx = TRILHA.findIndex(x => x.id === quizState.moduloId);
+    if (idx < TRILHA.length - 1) {
+      state.modulos[TRILHA[idx+1].id] = state.modulos[TRILHA[idx+1].id] || {};
+      state.modulos[TRILHA[idx+1].id].desbloqueado = true;
+    }
+
+    // Verificar conclusão total
+    const todosQuiz = TRILHA.filter(x => x.tipo === 'quiz');
+    const todosMarco = TRILHA.filter(x => x.tipo === 'marco');
+    const quizDone = todosQuiz.every(x => state.modulos[x.id]?.concluido);
+    const marcoDone = todosMarco.every(x => state.modulos[x.id]?.concluido);
+    if (quizDone && marcoDone) ganharBadge('trilha_completa');
+  }
+  state.modulos[quizState.moduloId] = ms;
+  salvar();
+
+  // UI
+  const circ = 2 * Math.PI * 58;
+  const offset = circ * (1 - pct/100);
+  const ring = document.getElementById('res-ring-circle');
+  ring.style.stroke = passou ? '#3DAA6E' : '#E24B4A';
+  setTimeout(() => { ring.style.strokeDashoffset = offset; }, 100);
+
+  document.getElementById('res-pct').textContent = pct + '%';
+  document.getElementById('res-acertos').textContent = acertos;
+  document.getElementById('res-erros').textContent = total - acertos;
+  document.getElementById('res-xp-earned').textContent = '+' + xpModulo;
+
+  if (pct === 100) { document.getElementById('res-emoji').textContent = '🏆'; document.getElementById('res-titulo').textContent = 'Gabarito!'; document.getElementById('res-sub').textContent = 'Incrível! Você acertou tudo. Siga em frente.'; }
+  else if (passou) { document.getElementById('res-emoji').textContent = '💪'; document.getElementById('res-titulo').textContent = 'Módulo concluído!'; document.getElementById('res-sub').textContent = 'Você atingiu 75% e pode avançar na trilha.'; }
+  else { document.getElementById('res-emoji').textContent = '🔁'; document.getElementById('res-titulo').textContent = 'Quase lá!'; document.getElementById('res-sub').textContent = 'Você precisa de 75% para avançar. Tente novamente!'; }
+
+  const bloqMsg = document.getElementById('bloqueado-msg');
+  if (!passou) {
+    bloqMsg.style.display = 'block';
+    bloqMsg.innerHTML = `<strong>Atenção:</strong> você precisa de pelo menos <strong>75% de acertos</strong> para avançar para o próximo módulo. Sua pontuação foi de <strong>${pct}%</strong>. Revise as questões abaixo e tente novamente.`;
+    document.getElementById('btn-continue').style.display = 'none';
+  } else {
+    bloqMsg.style.display = 'none';
+    const todosFeitos = TRILHA.every(x => state.modulos[x.id]?.concluido);
+    document.getElementById('btn-continue').style.display = 'block';
+    document.getElementById('btn-continue').textContent = todosFeitos ? '🏆 Ver certificado' : 'Continuar trilha →';
+  }
+
+  const errosSec = document.getElementById('res-erros-section');
+  const errosList = document.getElementById('res-erros-list');
+  errosList.innerHTML = '';
+  if (quizState.erros.length > 0) {
+    errosSec.style.display = 'block';
+    quizState.erros.forEach(e => {
+      const div = document.createElement('div');
+      div.className = 'res-erro-item';
+      div.innerHTML = `<div class="res-erro-dot">✕</div><div><div class="res-erro-q">${e.q}</div><div class="res-erro-g">${e.g}</div></div>`;
+      errosList.appendChild(div);
+    });
+  } else { errosSec.style.display = 'none'; }
+
+  show('modulo-resultado');
+}
+
+function continuarTrilha() {
+  const todosFeitos = TRILHA.every(x => state.modulos[x.id]?.concluido);
+  if (todosFeitos) { mostrarCertificado(); return; }
+  // Vai pro próximo desbloqueado
+  const proximo = TRILHA.find(m => state.modulos[m.id]?.desbloqueado && !state.modulos[m.id]?.concluido);
+  if (proximo) { iniciarModulo(proximo.id); }
+  else { showDash(); }
+}
+
+function repetirModulo() {
+  iniciarModulo(quizState.moduloId);
+}
+
+/* ══════════════════════════════════════════════════════
+   MARCOS / FORCA
+══════════════════════════════════════════════════════ */
+function iniciarMarco(m) {
+  const marco = MARCOS[m.marcoId];
+  if (!marco) return;
+  forcaState = {
+    marcoId: m.marcoId,
+    moduloId: m.id,
+    palavra: marco.senha,
+    letrasCorretas: new Set(),
+    letrasErradas: new Set(),
+    vidas: 6,
+    concluido: false
+  };
+  document.getElementById('forca-emoji').textContent = marco.emoji;
+  document.getElementById('forca-titulo').textContent = marco.titulo;
+  document.getElementById('forca-desc').textContent = marco.desc;
+  document.getElementById('forca-hint').textContent = marco.hint;
+  document.getElementById('forca-success').className = 'forca-success';
+  document.getElementById('forca-fail').className = 'forca-fail';
+  document.getElementById('forca-btn').style.display = 'none';
+  document.getElementById('forca-retry').style.display = 'none';
+  renderForca();
+  show('forca-screen');
+}
+
+function renderForca() {
+  const { palavra, letrasCorretas, letrasErradas, vidas } = forcaState;
+
+  // Vidas
+  const vidasEl = document.getElementById('forca-vidas');
+  vidasEl.innerHTML = '';
+  for (let i = 0; i < 6; i++) {
+    const d = document.createElement('div');
+    d.className = `forca-vida ${i >= vidas ? 'perdida' : ''}`;
+    vidasEl.appendChild(d);
+  }
+
+  // Palavra
+  const wordEl = document.getElementById('forca-word');
+  wordEl.innerHTML = '';
+  palavra.split('').forEach(c => {
+    if (c === ' ') {
+      const sp = document.createElement('div');
+      sp.style.width = '16px';
+      wordEl.appendChild(sp);
+      return;
+    }
+    const l = document.createElement('div');
+    l.className = `forca-letter ${letrasCorretas.has(c.toUpperCase()) ? 'revealed' : 'blank'}`;
+    l.textContent = letrasCorretas.has(c.toUpperCase()) ? c : '_';
+    wordEl.appendChild(l);
+  });
+
+  // Teclado
+  const kbd = document.getElementById('forca-kbd');
+  kbd.innerHTML = '';
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => {
+    const btn = document.createElement('button');
+    btn.className = `forca-key ${letrasCorretas.has(l) ? 'hit' : ''} ${letrasErradas.has(l) ? 'miss' : ''}`;
+    btn.textContent = l;
+    btn.disabled = letrasCorretas.has(l) || letrasErradas.has(l) || forcaState.concluido;
+    btn.onclick = () => clicarLetra(l);
+    kbd.appendChild(btn);
+  });
+}
+
+function clicarLetra(l) {
+  const { palavra } = forcaState;
+  const upper = l.toUpperCase();
+  if (palavra.toUpperCase().includes(upper)) {
+    forcaState.letrasCorretas.add(upper);
+  } else {
+    forcaState.letrasErradas.add(upper);
+    forcaState.vidas--;
+  }
+
+  // Verificar vitória
+  const ganhou = palavra.toUpperCase().split('').filter(c => c !== ' ').every(c => forcaState.letrasCorretas.has(c));
+  const perdeu = forcaState.vidas <= 0;
+
+  if (ganhou) {
+    forcaState.concluido = true;
+    const marco = MARCOS[forcaState.marcoId];
+    document.getElementById('forca-success-msg').textContent = marco.successMsg;
+    document.getElementById('forca-success').className = 'forca-success show';
+    document.getElementById('forca-btn').textContent = 'Continuar trilha →';
+    document.getElementById('forca-btn').style.display = 'block';
+
+    // Concluir marco
+    const ms = state.modulos[forcaState.moduloId] || {};
+    ms.concluido = true;
+    ms.desbloqueado = true;
+    state.modulos[forcaState.moduloId] = ms;
+    state.xp += TRILHA.find(m => m.id === forcaState.moduloId)?.xp || 50;
+
+    // Desbloquear próximo
+    const idx = TRILHA.findIndex(m => m.id === forcaState.moduloId);
+    if (idx < TRILHA.length - 1) {
+      state.modulos[TRILHA[idx+1].id] = state.modulos[TRILHA[idx+1].id] || {};
+      state.modulos[TRILHA[idx+1].id].desbloqueado = true;
+    }
+
+    // Badge forca
+    const todosMarcos = TRILHA.filter(m => m.tipo === 'marco').every(m => state.modulos[m.id]?.concluido);
+    if (todosMarcos) ganharBadge('forca_mestre');
+    salvar();
+  } else if (perdeu) {
+    forcaState.concluido = true;
+    document.getElementById('forca-fail').className = 'forca-fail show';
+    document.getElementById('forca-retry').style.display = 'block';
+  }
+  renderForca();
+}
+
+function forcaAvancar() {
+  const proximo = TRILHA.find(m => state.modulos[m.id]?.desbloqueado && !state.modulos[m.id]?.concluido);
+  if (proximo) iniciarModulo(proximo.id);
+  else showDash();
+}
+
+function forcaReset() {
+  const m = TRILHA.find(x => x.id === forcaState.moduloId);
+  if (m) iniciarMarco(m);
+}
+
+/* ══════════════════════════════════════════════════════
+   RANKING (localStorage compartilhado)
+══════════════════════════════════════════════════════ */
+function compartilharXP() {
+  try {
+    const ranking = JSON.parse(localStorage.getItem('aca_ranking') || '[]');
+    const idx = ranking.findIndex(r => r.nome === state.nome);
+    const entry = { nome: state.nome, marca: state.marca, xp: state.xp, modulos: TRILHA.filter(m => state.modulos[m.id]?.concluido).length, ts: Date.now() };
+    if (idx > -1) ranking[idx] = entry;
+    else ranking.push(entry);
+    localStorage.setItem('aca_ranking', JSON.stringify(ranking));
+    document.getElementById('ranking-sync').textContent = '✓ XP publicado! Peça para seus colegas fazerem o mesmo.';
+    renderRanking();
+  } catch(e) {
+    document.getElementById('ranking-sync').textContent = 'Use o mesmo dispositivo/rede para ver o ranking da turma.';
+  }
+}
+
+function renderRanking() {
+  try {
+    const ranking = JSON.parse(localStorage.getItem('aca_ranking') || '[]');
+    ranking.sort((a,b) => b.xp - a.xp);
+    const list = document.getElementById('ranking-list');
+    list.innerHTML = '';
+    if (ranking.length === 0) {
+      list.innerHTML = '<div class="ranking-empty">Nenhum resultado publicado ainda.<br>Clique em "Publicar meu XP" para aparecer aqui.</div>';
+      return;
+    }
+    ranking.forEach((r, i) => {
+      const div = document.createElement('div');
+      const isEu = r.nome === state.nome;
+      div.className = `ranking-item ${isEu ? 'eu' : ''}`;
+      const posClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+      const posEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}º`;
+      const ini = r.nome.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
+      div.innerHTML = `
+        <div class="ranking-pos ${posClass}">${posEmoji}</div>
+        <div class="ranking-avatar">${ini}</div>
+        <div class="ranking-info">
+          <div class="ranking-name">${r.nome} ${isEu ? '(você)' : ''}</div>
+          <div class="ranking-progress">${r.marca} · ${r.modulos} módulos concluídos</div>
+        </div>
+        <div class="ranking-xp">${r.xp} XP</div>`;
+      list.appendChild(div);
+    });
+  } catch(e) {
+    document.getElementById('ranking-list').innerHTML = '<div class="ranking-empty">Erro ao carregar ranking.</div>';
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   BADGES
+══════════════════════════════════════════════════════ */
+function ganharBadge(id) {
+  if (!state.badges.includes(id)) state.badges.push(id);
+}
+
+/* ══════════════════════════════════════════════════════
+   CERTIFICADO
+══════════════════════════════════════════════════════ */
+function mostrarCertificado() {
+  ganharBadge('trilha_completa');
+  salvar();
+  document.getElementById('cert-nome-dest').textContent = state.nome.split(' ')[0];
+  document.getElementById('cert-nome-full').textContent = state.nome;
+  document.getElementById('cert-data').textContent = `Emitido em ${new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })}`;
+  show('certificado-screen');
+  setTimeout(dispararConfetes, 300);
+}
+
+function dispararConfetes() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const particles = [];
+  const colors = ['#E8532A','#D4A843','#3DAA6E','#F0793A','#FFFFFF'];
+  for (let i = 0; i < 150; i++) {
+    particles.push({ x: Math.random() * canvas.width, y: -20, vx: (Math.random()-0.5)*4, vy: Math.random()*4+2, color: colors[Math.floor(Math.random()*colors.length)], size: Math.random()*8+4, rotation: Math.random()*360, rotVel: (Math.random()-0.5)*10 });
+  }
+  let frame = 0;
+  function animate() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.rotation += p.rotVel; p.vy += 0.1;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation*Math.PI/180);
+      ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, 1 - p.y/canvas.height*1.5);
+      ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+      ctx.restore();
+    });
+    frame++;
+    if (frame < 180) requestAnimationFrame(animate);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  animate();
+}
+
+function baixarCertificado() {
+  const w = window.open('', '_blank');
+  const data = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Certificado ACA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:#0D0D0D; display:flex; align-items:center; justify-content:center; min-height:100vh; padding:40px; }
+    .cert { background:linear-gradient(135deg,#1C1C1C,#222); border:2px solid rgba(212,168,67,0.4); border-radius:24px; padding:60px; max-width:700px; width:100%; text-align:center; position:relative; }
+    .aca { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:#D4A843; margin-bottom:8px; }
+    .certifica { font-size:14px; color:rgba(240,237,232,0.5); margin-bottom:24px; }
+    .nome { font-family:'Syne',sans-serif; font-size:40px; font-weight:800; color:#F0EDE8; margin-bottom:10px; letter-spacing:-0.02em; }
+    .curso { font-size:15px; color:rgba(240,237,232,0.6); line-height:1.7; margin-bottom:24px; }
+    .sep { width:60px; height:2px; background:#E8532A; margin:0 auto 24px; }
+    .stars { font-size:28px; letter-spacing:6px; margin-bottom:20px; }
+    .data { font-size:12px; color:rgba(240,237,232,0.35); margin-bottom:40px; }
+    .print-btn { background:#D4A843; color:#1A1200; border:none; padding:14px 32px; border-radius:10px; font-family:'Syne',sans-serif; font-size:15px; font-weight:800; cursor:pointer; }
+    @media print { .print-btn { display:none; } body { background:white; } .cert { background:white; border-color:#D4A843; } .nome,.aca { color:#1A1714; } .certifica,.curso,.data { color:#555; } }
+  </style></head><body>
+  <div class="cert">
+    <div class="aca">Academia de Crescimento — Arco Educação</div>
+    <div class="certifica">Certifica que</div>
+    <div class="nome">${state.nome}</div>
+    <div class="curso">concluiu com êxito o programa de formação<br><strong>Embarque de Consultores Educacionais</strong></div>
+    <div class="sep"></div>
+    <div class="stars">⭐⭐⭐⭐⭐</div>
+    <div class="data">Emitido em ${data} · ${state.xp} XP conquistados</div>
+    <button class="print-btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+  </div></body></html>`);
+  w.document.close();
+}
+
+/* ══════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════ */
+carregar();
+if (state.nome) {
+  inicializarModulos();
+  showDash();
+} else {
+  show('registro');
+}
+</script>
+</body>
+</html>
