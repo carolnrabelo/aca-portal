@@ -985,35 +985,38 @@ function forcaAvancar(){
 function forcaReset(){const m=TRILHA.find(x=>x.id===forca.moduloId);if(m)iniciarMarco(m);}
 
 function showRanking(){renderRanking();show('ranking-screen');}
+const SHEETS_URL='https://script.google.com/a/macros/arcoeducacao.com.br/s/AKfycbz0f1J6_k1IPqS3e7MDOWpcGlsIuZMIjdqn6T0bKwv4bmdejVcV9ztBp5E1jEso-UbwDA/exec';
 function compartilharXP(){
-  try{
-    const r=JSON.parse(localStorage.getItem('aca_ranking')||'[]');
-    const idx=r.findIndex(x=>x.nome===state.nome);
-    const obr=TRILHA.filter(x=>!x.extra);
-    const entry={nome:state.nome,xp:state.xp,modulos:TRILHA.filter(m=>state.modulos[m.id]?.concluido).length,pct:obr.length>0?Math.round(obr.filter(m=>state.modulos[m.id]?.concluido).length/obr.length*100):0,ts:Date.now()};
-    if(idx>-1)r[idx]=entry;else r.push(entry);
-    localStorage.setItem('aca_ranking',JSON.stringify(r));
-    document.getElementById('ranking-sync').textContent='✓ XP publicado!';
-    renderRanking();
-  }catch(e){document.getElementById('ranking-sync').textContent='Use o mesmo dispositivo para ver o ranking.';}
+  const sync=document.getElementById('ranking-sync');
+  sync.textContent='Publicando...';
+  const obr=TRILHA.filter(x=>!x.extra);
+  const entry={nome:state.nome,xp:state.xp,modulos:TRILHA.filter(m=>state.modulos[m.id]?.concluido).length,pct:obr.length>0?Math.round(obr.filter(m=>state.modulos[m.id]?.concluido).length/obr.length*100):0,ts:Date.now()};
+  fetch(SHEETS_URL,{method:'POST',body:JSON.stringify(entry)})
+    .then(r=>r.json())
+    .then(()=>{sync.textContent='✓ XP publicado!';renderRanking();})
+    .catch(()=>{sync.textContent='Erro ao publicar. Tente novamente.';});
 }
 function renderRanking(){
-  try{
-    const r=JSON.parse(localStorage.getItem('aca_ranking')||'[]');
-    r.sort((a,b)=>b.xp-a.xp);
-    const l=document.getElementById('ranking-list');l.innerHTML='';
-    if(r.length===0){l.innerHTML='<div class="ranking-empty">Nenhum resultado publicado ainda.<br>Clique em "Publicar meu XP" para aparecer aqui.</div>';return;}
-    r.forEach((x,i)=>{
-      const div=document.createElement('div');
-      const eu=x.nome===state.nome;
-      div.className='ranking-item '+(eu?'eu':'');
-      const pos=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'º';
-      const pc=i===0?'gold':i===1?'silver':i===2?'bronze':'';
-      const ini=x.nome.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
-      div.innerHTML='<div class="ranking-pos '+pc+'">'+pos+'</div><div class="r-avatar">'+ini+'</div><div class="r-info"><div class="r-name">'+x.nome+(eu?' (você)':'')+'</div><div class="r-prog">'+x.modulos+' módulos · '+x.pct+'% da trilha</div></div><div class="r-xp">'+x.xp+' XP</div>';
-      l.appendChild(div);
-    });
-  }catch(e){document.getElementById('ranking-list').innerHTML='<div class="ranking-empty">Erro ao carregar.</div>';}
+  const l=document.getElementById('ranking-list');
+  l.innerHTML='<div class="ranking-empty">Carregando...</div>';
+  fetch(SHEETS_URL)
+    .then(r=>r.json())
+    .then(data=>{
+      data.sort((a,b)=>b.xp-a.xp);
+      l.innerHTML='';
+      if(data.length===0){l.innerHTML='<div class="ranking-empty">Nenhum resultado publicado ainda.</div>';return;}
+      data.forEach((x,i)=>{
+        const div=document.createElement('div');
+        const eu=x.nome===state.nome;
+        div.className='ranking-item '+(eu?'eu':'');
+        const pos=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'º';
+        const pc=i===0?'gold':i===1?'silver':i===2?'bronze':'';
+        const ini=x.nome.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
+        div.innerHTML='<div class="ranking-pos '+pc+'">'+pos+'</div><div class="r-avatar">'+ini+'</div><div class="r-info"><div class="r-name">'+x.nome+(eu?' (você)':'')+'</div><div class="r-prog">'+x.modulos+' módulos · '+x.pct+'% da trilha</div></div><div class="r-xp">'+x.xp+' XP</div>';
+        l.appendChild(div);
+      });
+    })
+    .catch(()=>{l.innerHTML='<div class="ranking-empty">Erro ao carregar ranking.</div>';});
 }
 
 function showPainel(){
@@ -1027,14 +1030,17 @@ function verificarSenha(){
   else{document.getElementById('painel-erro').textContent='Senha incorreta.';}
 }
 function renderPainel(){
-  try{
-    const r=JSON.parse(localStorage.getItem('aca_ranking')||'[]');
-    r.sort((a,b)=>b.xp-a.xp);
-    const div=document.getElementById('painel-conteudo');
-    if(r.length===0){div.innerHTML='<h2 style="margin-bottom:8px">📊 Painel da Gestora</h2><p style="color:var(--ink2);margin-bottom:20px">Nenhum consultor publicou XP ainda.</p><button class="btn-back" onclick="showDash()">← Voltar</button>';return;}
-    let rows=r.map((x,i)=>'<tr><td>'+(i+1)+'º</td><td>'+x.nome+'</td><td>'+x.xp+' XP</td><td>'+x.modulos+' módulos</td><td>'+x.pct+'%</td><td>'+new Date(x.ts).toLocaleDateString('pt-BR')+'</td></tr>').join('');
-    div.innerHTML='<h2 style="margin-bottom:4px">📊 Painel da Gestora</h2><p style="color:var(--ink2);font-size:13px;margin-bottom:20px">Dados publicados pelos consultores. Baseado em '+r.length+' participante'+(r.length>1?'s':'')+'.</p><div style="overflow-x:auto"><table class="painel-table"><thead><tr><th>Pos.</th><th>Nome</th><th>XP</th><th>Módulos</th><th>Trilha</th><th>Último acesso</th></tr></thead><tbody>'+rows+'</tbody></table></div><button class="btn-back" onclick="showDash()">← Voltar</button>';
-  }catch(e){document.getElementById('painel-conteudo').innerHTML='<p>Erro ao carregar dados.</p>';}
+  const div=document.getElementById('painel-conteudo');
+  div.innerHTML='<h2 style="margin-bottom:8px">📊 Painel da Gestora</h2><p style="color:var(--ink2);margin-bottom:20px">Carregando dados...</p>';
+  fetch(SHEETS_URL)
+    .then(r=>r.json())
+    .then(r=>{
+      r.sort((a,b)=>b.xp-a.xp);
+      if(r.length===0){div.innerHTML='<h2 style="margin-bottom:8px">📊 Painel da Gestora</h2><p style="color:var(--ink2);margin-bottom:20px">Nenhum consultor publicou XP ainda.</p><button class="btn-back" onclick="showDash()">← Voltar</button>';return;}
+      let rows=r.map((x,i)=>'<tr><td>'+(i+1)+'º</td><td>'+x.nome+'</td><td>'+x.xp+' XP</td><td>'+x.modulos+' módulos</td><td>'+x.pct+'%</td><td>'+new Date(x.ts).toLocaleDateString('pt-BR')+'</td></tr>').join('');
+      div.innerHTML='<h2 style="margin-bottom:4px">📊 Painel da Gestora</h2><p style="color:var(--ink2);font-size:13px;margin-bottom:20px">Dados em tempo real via Google Sheets. '+r.length+' participante'+(r.length>1?'s':'')+'.</p><div style="overflow-x:auto"><table class="painel-table"><thead><tr><th>Pos.</th><th>Nome</th><th>XP</th><th>Módulos</th><th>Trilha</th><th>Último acesso</th></tr></thead><tbody>'+rows+'</tbody></table></div><button class="btn-back" onclick="showDash()">← Voltar</button>';
+    })
+    .catch(()=>{div.innerHTML='<h2 style="margin-bottom:8px">📊 Painel da Gestora</h2><p style="color:var(--red)">Erro ao carregar. Verifique a conexão.</p><div style="margin-top:12px"><button class="btn-back" onclick="showDash()">← Voltar</button></div>';});
 }
 
 function ganharBadge(id){if(!state.badges.includes(id))state.badges.push(id);}
