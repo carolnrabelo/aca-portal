@@ -368,8 +368,12 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--ink);min-
     <h2>Antes de começar</h2>
     <p>Seu nome completo aparecerá no certificado de conclusão. Digite exatamente como você quer que fique registrado.</p>
     <div class="form-group">
-      <label>Nome completo</label>
+      <label>Nome completo *</label>
       <input type="text" id="input-nome" placeholder="Seu nome completo" maxlength="60" autocomplete="off"/>
+    </div>
+    <div class="form-group">
+      <label>Turma *</label>
+      <input type="text" id="input-turma" placeholder="Ex: 2026.2 ou Junho 2026" maxlength="40" autocomplete="off"/>
     </div>
     <button class="btn-primary" id="btn-entrar" onclick="entrar()" disabled style="margin-top:8px">Entrar no portal →</button>
   </div>
@@ -784,23 +788,37 @@ function chaveUsuario(nome){return 'aca_v2_'+nome.trim().toLowerCase().replace(/
 function salvar(){try{if(state.nome)localStorage.setItem(chaveUsuario(state.nome),JSON.stringify(state));}catch(e){}}
 function carregar(nome){try{const k=chaveUsuario(nome);const s=localStorage.getItem(k);if(s){const d=JSON.parse(s);if(d.nome===nome)state={...state,...d};}}catch(e){}}
 
-document.getElementById('input-nome').addEventListener('input',()=>{
-  document.getElementById('btn-entrar').disabled=document.getElementById('input-nome').value.trim().length<2;
-});
+function _validarEntrada(){
+  const nome=document.getElementById('input-nome').value.trim();
+  const turma=document.getElementById('input-turma').value.trim();
+  document.getElementById('btn-entrar').disabled=nome.length<2||turma.length<1;
+}
+document.getElementById('input-nome').addEventListener('input',_validarEntrada);
+document.getElementById('input-turma').addEventListener('input',_validarEntrada);
 function entrar(){
   const nome=document.getElementById('input-nome').value.trim();
-  state={nome:'',xp:0,modulos:{},badges:[],desafios:[],iniciado:new Date().toISOString(),diasModulos:{}};
+  const turma=document.getElementById('input-turma').value.trim();
+  // Atualiza turma ativa com o que a pessoa digitou
+  TURMA_ATIVA=turma;
+  try{localStorage.setItem('aca_turma_ativa',turma);}catch(e){}
+  state={nome:'',xp:0,modulos:{},badges:[],desafios:[],iniciado:new Date().toISOString(),diasModulos:{},turma:turma};
   state.nome=nome;
   carregar(nome);
+  // Se já tinha progresso salvo, garante que a turma está correta
+  state.turma=turma;
   try{localStorage.setItem('aca_ultimo_nome',nome);}catch(e){}
+  try{localStorage.setItem('aca_ultimo_turma',turma);}catch(e){}
+  state._sessaoInicio=Date.now();
   inicializarModulos();salvar();
   sndStart();
   showDash();
 }
 function sairPerfil(){
   if(confirm('Sair do seu perfil? Seu progresso está salvo e você pode retornar depois.')){
+    try{_enviarSessaoFim();}catch(e){}
     try{localStorage.removeItem('aca_ultimo_nome');}catch(e){}
-    state={nome:'',xp:0,modulos:{},badges:[],desafios:[],iniciado:new Date().toISOString(),diasModulos:{}};
+    try{localStorage.removeItem('aca_ultimo_turma');}catch(e){}
+    state={nome:'',xp:0,modulos:{},badges:[],desafios:[],iniciado:new Date().toISOString(),diasModulos:{},turma:''};
     show('splash');
   }
 }
@@ -833,6 +851,8 @@ function renderDash(){
   document.getElementById('dash-avatar').textContent=ini;
   document.getElementById('dash-nome').textContent=state.nome;
   document.getElementById('dash-level').textContent='Nível '+nv.n+' · '+nv.label;
+  const dashNome=document.getElementById('dash-nome');
+  if(state.turma)dashNome.title='Turma: '+state.turma;
   document.getElementById('dash-xp').textContent=state.xp+' XP';
   const p=getXPProgress(state.xp);
   const pct=Math.min(100,Math.round(p.atual/p.total*100));
@@ -920,6 +940,7 @@ function renderQ(){
   const q=quiz.questoes[quiz.idx];
   const total=quiz.questoes.length;
   const pct=Math.round(quiz.idx/total*100);
+  quiz.inicioQuestao=Date.now(); // rastreia tempo por questão
   document.getElementById('quiz-prog-bar').style.width=pct+'%';
   document.getElementById('quiz-prog-text').textContent=(quiz.idx+1)+' de '+total;
   document.getElementById('q-num').textContent='Questão '+(quiz.idx+1);
@@ -1046,6 +1067,16 @@ function mostrarResultado(){
   const es=document.getElementById('res-erros-sec');const el=document.getElementById('res-erros-list');el.innerHTML='';
   if(quiz.erros.length>0){es.style.display='block';quiz.erros.forEach(e=>{const d=document.createElement('div');d.className='res-erro-item';d.innerHTML='<div class="res-erro-dot">✕</div><div><div class="res-erro-q">'+e.q+'</div><div class="res-erro-g">'+e.g+'</div></div>';el.appendChild(d);});}
   else es.style.display='none';
+  // Envia dados do módulo para o Sheets em background
+  try{
+    var _m=TRILHA.find(function(x){return x.id===quiz.moduloId;});
+    if(_m){
+      var _tempo=Math.round((Date.now()-quiz.inicio)/60000);
+      var _ms=state.modulos[quiz.moduloId]||{};
+      var _passou=Math.round(quiz.acertos/quiz.questoes.length*100)>=75;
+      _enviarModulo(quiz.moduloId,quiz.acertos,quiz.questoes.length,_tempo,_ms.tentativas||1,_passou);
+    }
+  }catch(e){}
   show('modulo-resultado');
 }
 
@@ -1132,6 +1163,46 @@ function forcaReset(){const m=TRILHA.find(x=>x.id===forca.moduloId);if(m)iniciar
 
 function showRanking(){renderRanking();show('ranking-screen');}
 const SHEETS_URL='https://script.google.com/macros/s/AKfycbxzMhoBqupZJWgOj_RyaW-KIWukykyvWC0B1tsl0F4gop0ZkrEEHIeXKGoteOGOGtdB/exec';
+
+function _enviarSheets(tipo, dados){
+  if(!SHEETS_URL)return;
+  const payload=Object.assign({type:tipo,nome:state.nome,turma:state.turma||TURMA_ATIVA},dados);
+  fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)}).catch(()=>{});
+}
+
+function _enviarQuestao(questaoId, acertou, tempoSeg){
+  _enviarSheets('questao',{
+    modulo:quiz.moduloId||'',
+    questaoId:questaoId,
+    acertou:acertou,
+    tempoResposta:tempoSeg,
+    data:new Date().toISOString()
+  });
+}
+
+function _enviarModulo(moduloId, acertos, total, tempo, tentativa, concluido){
+  _enviarSheets('modulo',{
+    modulo:moduloId,
+    nota:Math.round(acertos/total*100),
+    acertos:acertos,
+    erros:total-acertos,
+    tempo:tempo,
+    tentativaNumero:tentativa,
+    concluido:concluido,
+    data:new Date().toISOString()
+  });
+}
+
+function _enviarSessaoFim(){
+  if(!state._sessaoInicio)return;
+  const dur=Math.round((Date.now()-state._sessaoInicio)/60000);
+  _enviarSheets('sessao',{
+    inicio:new Date(state._sessaoInicio).toISOString(),
+    fim:new Date().toISOString(),
+    duracao:dur
+  });
+}
+
 function compartilharXP(){
   const sync=document.getElementById('ranking-sync');
   sync.textContent='Publicando...';
@@ -1356,8 +1427,11 @@ function confetes(){
 // Verifica se há sessão ativa (nome salvo separado)
 try{
   const ultimoNome=localStorage.getItem('aca_ultimo_nome');
+  const ultimaTurma=localStorage.getItem('aca_ultimo_turma');
   if(ultimoNome){
+    if(ultimaTurma){TURMA_ATIVA=ultimaTurma;}
     state.nome=ultimoNome;
+    state.turma=ultimaTurma||TURMA_ATIVA;
     carregar(ultimoNome);
     if(state.nome){inicializarModulos();showDash();}else{show('splash');}
   }else{show('splash');}
@@ -1490,6 +1564,12 @@ responder = function(chosen, opts, q) {
   try{pararMusicaFundo();}catch(e){}
   try{const isOk=chosen.ok===true;if(isOk)sndCorrect();else sndWrong();}catch(e){}
   _responderOrig(chosen, opts, q);
+  // Envia dados da questão para o Sheets em background
+  try{
+    const tempoResposta=Math.round((Date.now()-(quiz.inicioQuestao||Date.now()))/1000);
+    const qId=(quiz.moduloId||'')+'_q'+(quiz.idx+1);
+    _enviarQuestao(qId, chosen.ok===true, tempoResposta);
+  }catch(e){}
 };
 
 /* ══ SOBRESCREVE ganharBadge() para toast ══ */
