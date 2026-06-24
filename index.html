@@ -853,6 +853,12 @@ function renderDash(){
   document.getElementById('dash-level').textContent='Nível '+nv.n+' · '+nv.label;
   const dashNome=document.getElementById('dash-nome');
   if(state.turma)dashNome.title='Turma: '+state.turma;
+  // Mostra turma abaixo do nível
+  var dashLevelEl=document.getElementById('dash-level');
+  if(dashLevelEl){
+    var turmaLabel=state.turma||TURMA_ATIVA||'';
+    dashLevelEl.textContent='Nível '+nv.n+' · '+nv.label+(turmaLabel?' · '+turmaLabel:'');
+  }
   document.getElementById('dash-xp').textContent=state.xp+' XP';
   const p=getXPProgress(state.xp);
   const pct=Math.min(100,Math.round(p.atual/p.total*100));
@@ -924,6 +930,8 @@ function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Mat
 function iniciarModulo(id){
   const m=TRILHA.find(x=>x.id===id);
   if(!m||m.tipo==='marco')return;
+  try{sndStart();}catch(e){}
+  setTimeout(function(){try{tocarMusicaFundo();}catch(e){}},600);
   const ms=state.modulos[id]||{};
   const bancoTotal=BANCO[m.banco]||[];
   const erros=ms.banco_erros||[];
@@ -963,7 +971,15 @@ function renderQ(){
 function responder(chosen,opts,q){
   if(quiz.respondeu)return;
   quiz.respondeu=true;
+  // Para música e toca som de acerto/erro
+  try{pararMusicaFundo();}catch(e){}
   const isOk=chosen.ok===true;
+  try{if(isOk)sndCorrect();else sndWrong();}catch(e){}
+  // Envia questão para Sheets
+  try{
+    var _tq=Math.round((Date.now()-(quiz.inicioQuestao||Date.now()))/1000);
+    _enviarQuestao((quiz.moduloId||'')+'_q'+(quiz.idx+1),isOk,_tq);
+  }catch(e){}
   document.querySelectorAll('.opt').forEach(btn=>{
     btn.disabled=true;
     const letter=btn.querySelector('.opt-letter').textContent;
@@ -974,7 +990,8 @@ function responder(chosen,opts,q){
   });
   const fb=document.getElementById('feedback');
   if(isOk){
-    quiz.acertos++;state.xp+=10;
+    quiz.acertos++;
+    // XP por acerto só é contabilizado no resultado se passar (em mostrarResultado)
     fb.className='feedback ok show';
     document.getElementById('fb-icon').textContent='✓';
     document.getElementById('fb-label').textContent='Isso aí!';
@@ -995,10 +1012,28 @@ function responder(chosen,opts,q){
   salvar();
 }
 
-function nextQ(){quiz.idx++;quiz.idx>=quiz.questoes.length?mostrarResultado():renderQ();}
+function nextQ(){
+  // Desabilita botão para evitar duplo clique
+  var btn=document.getElementById('btn-next');
+  if(btn)btn.disabled=true;
+  try{sndNext();}catch(e){}
+  quiz.idx++;
+  if(quiz.idx>=quiz.questoes.length){
+    mostrarResultado();
+  }else{
+    renderQ();
+    // Retoma música na próxima questão
+    setTimeout(function(){try{tocarMusicaFundo();}catch(e){}},200);
+  }
+}
 function exitQuiz(){if(confirm('Sair? O progresso desta sessão não será salvo.')){try{pararMusicaFundo();}catch(e){}showDash();}}
 
 function mostrarResultado(){
+  // Para música de fundo
+  try{pararMusicaFundo();}catch(e){}
+  // Captura nível antes para detectar subida
+  var _nivelAntes=0;
+  try{_nivelAntes=getNivel(state.xp).n;}catch(e){}
   const m=TRILHA.find(x=>x.id===quiz.moduloId);
   const total=quiz.questoes.length;
   const ac=quiz.acertos;
@@ -1009,7 +1044,10 @@ function mostrarResultado(){
   const prevScore=ms.melhorScore||0;
   ms.melhorScore=Math.max(prevScore,ac);
   ms.banco_erros=quiz.indicesErros||[];
-  const xpGanho=passou&&!ms.concluido?m.xp:passou?Math.round(m.xp*0.3):0;
+  // XP por acertos (só quando passa) + bônus de conclusão
+  const xpPorAcertos=passou?(quiz.acertos*10):0;
+  const xpBonus=passou&&!ms.concluido?m.xp:passou?Math.round(m.xp*0.3):0;
+  const xpGanho=xpPorAcertos+xpBonus;
   state.xp+=xpGanho;
   if(passou){
     ms.concluido=true;
@@ -1057,7 +1095,11 @@ function mostrarResultado(){
   const resStatXp=document.getElementById('res-xp').parentElement;
   let detDiv=resStatXp.querySelector('.xp-detail');
   if(!detDiv){detDiv=document.createElement('div');detDiv.className='xp-detail';resStatXp.appendChild(detDiv);}
-  detDiv.innerHTML=(ac*10>0?'<span>'+ac+'×10 = +'+xpAcertos+'</span>':'')+(passou?'<span>bônus +'+(ms.tentativas>1?Math.round(m.xp*0.3):m.xp)+'</span>':'<span style="color:var(--red)">sem bônus</span>');
+  var _xpAc=passou?ac*10:0;
+  var _xpBon=passou&&!ms.concluido?m.xp:passou?Math.round(m.xp*0.3):0;
+  detDiv.innerHTML=passou?
+    '<span>'+ac+'×10 = +'+_xpAc+'</span><span>bônus +'+ _xpBon+'</span>':
+    '<span style="color:var(--red)">sem XP — precisa de 75%</span>';
   if(pct===100){document.getElementById('res-emoji').textContent='🏆';document.getElementById('res-titulo').textContent='Gabarito!';document.getElementById('res-sub').textContent='Perfeito! Você acertou tudo.';}
   else if(passou){document.getElementById('res-emoji').textContent='💪';document.getElementById('res-titulo').textContent='Módulo concluído!';document.getElementById('res-sub').textContent='Você atingiu 75% e pode avançar.';}
   else{document.getElementById('res-emoji').textContent='🔁';document.getElementById('res-titulo').textContent='Quase lá!';document.getElementById('res-sub').textContent='Você precisa de 75% para avançar.';}
@@ -1067,14 +1109,20 @@ function mostrarResultado(){
   const es=document.getElementById('res-erros-sec');const el=document.getElementById('res-erros-list');el.innerHTML='';
   if(quiz.erros.length>0){es.style.display='block';quiz.erros.forEach(e=>{const d=document.createElement('div');d.className='res-erro-item';d.innerHTML='<div class="res-erro-dot">✕</div><div><div class="res-erro-q">'+e.q+'</div><div class="res-erro-g">'+e.g+'</div></div>';el.appendChild(d);});}
   else es.style.display='none';
+  // Sons e toasts de resultado
+  var _pctFinal=Math.round(quiz.acertos/quiz.questoes.length*100);
+  try{if(_pctFinal>=75)sndModulo();}catch(e){}
+  try{
+    var _nivelDepois=getNivel(state.xp).n;
+    if(_nivelDepois>_nivelAntes)setTimeout(function(){toastNivel(getNivel(state.xp));},1000);
+  }catch(e){}
   // Envia dados do módulo para o Sheets em background
   try{
-    var _m=TRILHA.find(function(x){return x.id===quiz.moduloId;});
-    if(_m){
+    var _mEnv=TRILHA.find(function(x){return x.id===quiz.moduloId;});
+    if(_mEnv){
       var _tempo=Math.round((Date.now()-quiz.inicio)/60000);
-      var _ms=state.modulos[quiz.moduloId]||{};
-      var _passou=Math.round(quiz.acertos/quiz.questoes.length*100)>=75;
-      _enviarModulo(quiz.moduloId,quiz.acertos,quiz.questoes.length,_tempo,_ms.tentativas||1,_passou);
+      var _msEnv=state.modulos[quiz.moduloId]||{};
+      _enviarModulo(quiz.moduloId,quiz.acertos,quiz.questoes.length,_tempo,_msEnv.tentativas||1,_pctFinal>=75);
     }
   }catch(e){}
   show('modulo-resultado');
@@ -1203,16 +1251,8 @@ function _enviarSessaoFim(){
   });
 }
 
-function compartilharXP(){
-  const sync=document.getElementById('ranking-sync');
-  sync.textContent='Publicando...';
-  const obr=TRILHA.filter(x=>!x.extra);
-  const entry={nome:state.nome,xp:state.xp,modulos:TRILHA.filter(m=>state.modulos[m.id]?.concluido).length,pct:obr.length>0?Math.round(obr.filter(m=>state.modulos[m.id]?.concluido).length/obr.length*100):0,ts:Date.now()};
-  fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(entry)})
-    .then(r=>r.json())
-    .then(()=>{sync.textContent='✓ XP publicado!';renderRanking();})
-    .catch(()=>{sync.textContent='Erro ao publicar. Tente novamente.';});
-}
+// compartilharXP definida abaixo com integração Sheets
+
 function renderRanking(){
   const l=document.getElementById('ranking-list');
   l.innerHTML='<div class="ranking-empty">Carregando...</div>';
@@ -1220,7 +1260,11 @@ function renderRanking(){
     .then(r=>r.json())
     .then(allData=>{
       // Filtra só a turma ativa (registros sem turma = turmas antigas, não aparecem)
-      const data=allData.filter(x=>(x.turma||'')===TURMA_ATIVA);
+      // Filtra por turma — se dado não tem turma OU turma bate, inclui
+      const data=allData.filter(x=>{
+        var t=x.turma||'';
+        return t===''||t===TURMA_ATIVA;
+      });
       data.sort((a,b)=>b.xp-a.xp);
       l.innerHTML='';
       if(data.length===0){l.innerHTML='<div class="ranking-empty">Nenhum resultado publicado ainda.</div>';return;}
@@ -1239,13 +1283,25 @@ function renderRanking(){
 }
 
 function showPainel(){
-  document.getElementById('painel-senha-input').value='';
-  document.getElementById('painel-erro').textContent='';
+  _painelAutenticado=false;
+  // Restaura o formulário de senha
+  document.getElementById('painel-conteudo').innerHTML=`
+    <div class="painel-senha-wrap">
+      <h3>🔐 Painel da Gestora</h3>
+      <p>Acesso restrito. Digite a senha para visualizar os dados da turma.</p>
+      <div class="form-group" style="text-align:left">
+        <label>Senha</label>
+        <input type="password" id="painel-senha-input" placeholder="Digite a senha" onkeydown="if(event.key==='Enter')verificarSenha()"/>
+      </div>
+      <button class="btn-primary" onclick="verificarSenha()" style="margin-top:8px">Entrar</button>
+      <div style="margin-top:12px"><button class="btn-back" onclick="showDash()">← Voltar</button></div>
+      <div id="painel-erro" style="color:var(--red);font-size:12px;margin-top:10px"></div>
+    </div>`;
   show('painel-screen');
 }
 function verificarSenha(){
   const s=document.getElementById('painel-senha-input').value;
-  if(s==='ACA2026!'){renderPainel();}
+  if(s==='ACA2026!'){_painelAutenticado=true;renderPainel();}
   else{document.getElementById('painel-erro').textContent='Senha incorreta.';}
 }
 // renderPainel v2 - usa variável global e tabs funcionando
@@ -1254,8 +1310,10 @@ let _painelTodos = [];
 let _turmasDisponiveis = [];
 let _painelTurmaFiltro = TURMA_ATIVA;
 let _painelTab = 'geral';
+let _painelAutenticado = false;
 
 function renderPainel(){
+  if(!_painelAutenticado){showPainel();return;}
   const div=document.getElementById('painel-conteudo');
   div.innerHTML='<h2 style="margin-bottom:8px">📊 Painel da Gestora</h2><p style="color:var(--ink2);font-size:13px">Carregando...</p>';
   fetch(SHEETS_URL,{cache:'no-store'})
@@ -1385,8 +1443,26 @@ function _gerenciarTurmas(){
   }
 }
 
-function ganharBadge(id){if(!state.badges.includes(id))state.badges.push(id);}
-function ganharDesafio(id){if(!state.desafios.includes(id)){state.desafios.push(id);const bd={seq_dia:'sequencia',perfeito_d:'perfeito',veloz_d:'veloz',persistente_d:'persistente'};if(bd[id])ganharBadge(bd[id]);}}
+function ganharBadge(id){
+  if(!state.badges.includes(id)){
+    state.badges.push(id);
+    try{
+      const def=BADGES_DEF.find(function(b){return b.id===id;});
+      if(def)setTimeout(function(){toastBadge(def);},800);
+    }catch(e){}
+  }
+}
+function ganharDesafio(id){
+  if(!state.desafios.includes(id)){
+    state.desafios.push(id);
+    var bd={seq_dia:'sequencia',perfeito_d:'perfeito',veloz_d:'veloz',persistente_d:'persistente'};
+    if(bd[id])ganharBadge(bd[id]);
+    try{
+      var _def=DESAFIOS_DEF.find(function(d){return d.id===id;});
+      if(_def)setTimeout(function(){try{toastDesafio(_def);}catch(e){}},400);
+    }catch(e){}
+  }
+}
 
 function mostrarCertificado(){
   ganharBadge('trilha_completa');salvar();
@@ -1559,18 +1635,7 @@ function toastDesafio(d){
 }
 
 /* ══ SOBRESCREVE responder() para adicionar sons e toasts ══ */
-const _responderOrig = responder;
-responder = function(chosen, opts, q) {
-  try{pararMusicaFundo();}catch(e){}
-  try{const isOk=chosen.ok===true;if(isOk)sndCorrect();else sndWrong();}catch(e){}
-  _responderOrig(chosen, opts, q);
-  // Envia dados da questão para o Sheets em background
-  try{
-    const tempoResposta=Math.round((Date.now()-(quiz.inicioQuestao||Date.now()))/1000);
-    const qId=(quiz.moduloId||'')+'_q'+(quiz.idx+1);
-    _enviarQuestao(qId, chosen.ok===true, tempoResposta);
-  }catch(e){}
-};
+// responder sons integrados diretamente
 
 /* ══ SOBRESCREVE ganharBadge() para toast ══ */
 const _ganharBadgeOrig = ganharBadge;
@@ -1582,75 +1647,16 @@ ganharBadge = function(id) {
   }
 };
 // Versão melhorada com toast
-function ganharBadgeComToast(id) {
-  if(!state.badges.includes(id)){
-    state.badges.push(id);
-    const def = BADGES_DEF.find(b=>b.id===id);
-    if(def) setTimeout(()=>toastBadge(def), 800);
-  }
-}
-function ganharDesafioComToast(id) {
-  if(!state.desafios.includes(id)){
-    state.desafios.push(id);
-    const bd={seq_dia:'sequencia',perfeito_d:'perfeito',veloz_d:'veloz',persistente_d:'persistente'};
-    if(bd[id]) ganharBadgeComToast(bd[id]);
-    const def = DESAFIOS_DEF.find(d=>d.id===id);
-    if(def) setTimeout(()=>toastDesafio(def), 400);
-  }
-}
+// ganharBadge e ganharDesafio já incluem toast
 
 /* ══ SOBRESCREVE mostrarResultado() para sons e toasts de nível ══ */
-const _mostrarResultadoOrig = mostrarResultado;
-let _resultadoProcessando = false;
-mostrarResultado = function() {
-  if(_resultadoProcessando) return; // guard contra dupla execução
-  _resultadoProcessando = true;
-  try{pararMusicaFundo();}catch(e){}
-  const nivelAntes = getNivel(state.xp).n;
-  const acAntes = quiz.acertos;
-  const totalAntes = (quiz.questoes && quiz.questoes.length) || 6;
-  try {
-    _mostrarResultadoOrig();
-  } catch(e) {
-    // Se falhou, garante que a tela de resultado aparece de qualquer forma
-    console.error('Erro em mostrarResultado:', e);
-    show('modulo-resultado');
-  } finally {
-    _resultadoProcessando = false;
-  }
-  try {
-    const nivelDepois = getNivel(state.xp).n;
-    if(nivelDepois > nivelAntes) setTimeout(()=>toastNivel(getNivel(state.xp)), 1000);
-    if(Math.round(acAntes/totalAntes*100) >= 75) setTimeout(sndModulo, 300);
-  } catch(e){}
-};
+// mostrarResultado sons integrados diretamente
 
 /* ══ SOM ao iniciar módulo ══ */
-const _iniciarModuloOrig = iniciarModulo;
-iniciarModulo = function(id) {
-  try{sndStart();}catch(e){}
-  _iniciarModuloOrig(id);
-  setTimeout(()=>{try{tocarMusicaFundo();}catch(e){}},600);
-};
+// iniciarModulo sons integrados diretamente
 
 /* ══ SOM próxima questão ══ */
-const _nextQOrig = nextQ;
-let _nextQProcessando = false;
-nextQ = function() {
-  if(_nextQProcessando) return; // guard contra dupla execução
-  _nextQProcessando = true;
-  try{sndNext();}catch(e){}
-  try{ _nextQOrig(); }catch(e){ console.error('Erro em nextQ:', e); }
-  // Retoma música se ainda está no quiz (não chegou ao resultado)
-  setTimeout(function(){
-    _nextQProcessando = false;
-    try{
-      if(document.getElementById('quiz').classList.contains('active')){
-        tocarMusicaFundo();
-      }
-    }catch(e){}
-  }, 300);
-};
+// nextQ sons integrados diretamente
 
 /* ══ RANKING COM COUNTDOWN ══ */
 function showRankingComContagem(){
@@ -1928,32 +1934,34 @@ let painelTab='geral';
 
 
 /* ══ PUBLICA DADOS EXPANDIDOS ══ */
-const _compartilharXPOrig = compartilharXP;
 compartilharXP = function() {
   const sync=document.getElementById('ranking-sync');
   sync.textContent='Publicando...';
-  const obr=TRILHA.filter(x=>!x.extra);
-  // Monta detalhes por módulo
-  const detalhes={};
-  TRILHA.filter(m=>m.tipo==='quiz').forEach(m=>{
-    const ms=state.modulos[m.id]||{};
-    if(ms.concluido) detalhes[m.id]={concluido:true,melhorScore:ms.melhorScore,tentativas:ms.tentativas||0};
-  });
+  const obr=TRILHA.filter(function(x){return !x.extra;});
+  const modsConcluidos=TRILHA.filter(function(m){return state.modulos[m.id]&&state.modulos[m.id].concluido;}).length;
+  const pct=obr.length>0?Math.round(TRILHA.filter(function(m){return !m.extra&&state.modulos[m.id]&&state.modulos[m.id].concluido;}).length/obr.length*100):0;
+  const nivel=getNivel(state.xp).label;
+  const insignias=state.badges?state.badges.length:0;
+  const tentativas=Object.values(state.modulos).reduce(function(a,m){return a+(m.tentativas||0);},0);
+  const certificado=TRILHA.filter(function(x){return !x.extra;}).every(function(x){return state.modulos[x.id]&&state.modulos[x.id].concluido;});
   const entry={
     nome:state.nome,
+    turma:state.turma||TURMA_ATIVA||'',
     xp:state.xp,
-    modulos:TRILHA.filter(m=>state.modulos[m.id]?.concluido).length,
-    pct:obr.length>0?Math.round(obr.filter(m=>state.modulos[m.id]?.concluido).length/obr.length*100):0,
-    ts:Date.now(),
-    detalhes,
-    tentativas:Object.values(state.modulos).reduce((a,m)=>a+(m.tentativas||0),0),
-    certificado:TRILHA.filter(x=>!x.extra).every(x=>state.modulos[x.id]?.concluido),
-    turma:TURMA_ATIVA
+    nivel:nivel,
+    modulos:modsConcluidos,
+    pct:pct,
+    insignias:insignias,
+    certificado:certificado,
+    tentativas:tentativas
   };
   fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(entry)})
-    .then(r=>r.json())
-    .then(()=>{sync.textContent='✓ XP publicado!';showToast('📤','XP publicado!','Você aparece no ranking agora.','green');})
-    .catch(()=>{sync.textContent='Erro ao publicar. Tente novamente.';});
+    .then(function(r){return r.json();})
+    .then(function(){
+      sync.textContent='✓ XP publicado!';
+      try{showToast('📤','XP publicado!','Você aparece no ranking agora.','green');}catch(e){}
+    })
+    .catch(function(){sync.textContent='Erro ao publicar. Tente novamente.';});
 };
 
 /* ══ BOTÃO MODO COLETIVO NO DASHBOARD ══ */
