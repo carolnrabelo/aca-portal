@@ -1487,6 +1487,7 @@ function toastDesafio(d){
 /* ══ SOBRESCREVE responder() para adicionar sons e toasts ══ */
 const _responderOrig = responder;
 responder = function(chosen, opts, q) {
+  try{pararMusicaFundo();}catch(e){}
   try{const isOk=chosen.ok===true;if(isOk)sndCorrect();else sndWrong();}catch(e){}
   _responderOrig(chosen, opts, q);
 };
@@ -1520,17 +1521,28 @@ function ganharDesafioComToast(id) {
 
 /* ══ SOBRESCREVE mostrarResultado() para sons e toasts de nível ══ */
 const _mostrarResultadoOrig = mostrarResultado;
+let _resultadoProcessando = false;
 mostrarResultado = function() {
+  if(_resultadoProcessando) return; // guard contra dupla execução
+  _resultadoProcessando = true;
   try{pararMusicaFundo();}catch(e){}
+  const nivelAntes = getNivel(state.xp).n;
+  const acAntes = quiz.acertos;
+  const totalAntes = (quiz.questoes && quiz.questoes.length) || 6;
   try {
-    const nivelAntes = getNivel(state.xp).n;
-    const acAntes = quiz.acertos;
-    const totalAntes = (quiz.questoes && quiz.questoes.length) || 6;
     _mostrarResultadoOrig();
+  } catch(e) {
+    // Se falhou, garante que a tela de resultado aparece de qualquer forma
+    console.error('Erro em mostrarResultado:', e);
+    show('modulo-resultado');
+  } finally {
+    _resultadoProcessando = false;
+  }
+  try {
     const nivelDepois = getNivel(state.xp).n;
     if(nivelDepois > nivelAntes) setTimeout(()=>toastNivel(getNivel(state.xp)), 1000);
     if(Math.round(acAntes/totalAntes*100) >= 75) setTimeout(sndModulo, 300);
-  } catch(e) { _mostrarResultadoOrig(); }
+  } catch(e){}
 };
 
 /* ══ SOM ao iniciar módulo ══ */
@@ -1543,9 +1555,21 @@ iniciarModulo = function(id) {
 
 /* ══ SOM próxima questão ══ */
 const _nextQOrig = nextQ;
+let _nextQProcessando = false;
 nextQ = function() {
+  if(_nextQProcessando) return; // guard contra dupla execução
+  _nextQProcessando = true;
   try{sndNext();}catch(e){}
-  _nextQOrig();
+  try{ _nextQOrig(); }catch(e){ console.error('Erro em nextQ:', e); }
+  // Retoma música se ainda está no quiz (não chegou ao resultado)
+  setTimeout(function(){
+    _nextQProcessando = false;
+    try{
+      if(document.getElementById('quiz').classList.contains('active')){
+        tocarMusicaFundo();
+      }
+    }catch(e){}
+  }, 300);
 };
 
 /* ══ RANKING COM COUNTDOWN ══ */
@@ -1615,17 +1639,38 @@ function iniciarColetivoModulo(id){
   document.getElementById('col-host-titulo').textContent=m.titulo;
   const bancoTotal=BANCO[m.banco]||[];
   coletivoState.questoes=shuffle([...bancoTotal]).slice(0,6);
-  sndStart();
+  // Garante AudioContext desbloqueado (clique já é interação válida)
+  try{getACtx();}catch(e){}
+  try{sndStart();}catch(e){}
   // Publica e só então renderiza
   const payload={type:'host',active:true,moduloId:id,qIdx:0,revealed:false,questoes:coletivoState.questoes,ts:Date.now()};
   fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
     .then(r=>r.json())
-    .then(()=>renderColHostQuestao())
+    .then(()=>_contdownHostInicio())
     .catch(()=>{
-      // Mesmo com erro, renderiza localmente
-      renderColHostQuestao();
+      _contdownHostInicio();
       showToast('⚠️','Aviso','Modo offline — alunos podem não sincronizar.','accent');
     });
+}
+
+function _contdownHostInicio(){
+  const c=document.getElementById('col-host-content');
+  let n=3;
+  function tick(){
+    try{sndCountdown();}catch(e){}
+    c.innerHTML='<div class="col-status" style="padding:60px 20px">'+
+      '<div style="font-size:90px;font-weight:900;color:var(--accent);line-height:1">'+n+'</div>'+
+      '<p style="color:var(--ink2);font-size:15px;margin-top:16px">Preparando a turma...</p>'+
+    '</div>';
+    if(n>1){n--;setTimeout(tick,1000);}
+    else{
+      setTimeout(function(){
+        try{sndStart();}catch(e){}
+        renderColHostQuestao();
+      },1000);
+    }
+  }
+  tick();
 }
 
 function publicarEstadoColetivo(){
@@ -1670,7 +1715,10 @@ function renderColHostQuestao(){
 
 function revelarResposta(){
   coletivoState.revealed=true;
-  sndCorrect();
+  // Som de revelação — fanfarra curta
+  try{
+    [523,659,784,1047].forEach(function(f,i){playTone(f,0.2,'sine',0.3,i*0.08);});
+  }catch(e){}
   publicarEstadoColetivo();
   renderColHostQuestao();
 }
@@ -1678,7 +1726,11 @@ function revelarResposta(){
 function proxQuestaoColetivo(){
   coletivoState.qIdx++;
   coletivoState.revealed=false;
-  sndNext();
+  // Som de avanço — dois bipes crescentes
+  try{
+    playTone(440,0.1,'sine',0.2);
+    setTimeout(function(){playTone(660,0.15,'sine',0.25);},120);
+  }catch(e){}
   publicarEstadoColetivo();
   renderColHostQuestao();
 }
