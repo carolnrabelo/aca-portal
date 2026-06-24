@@ -776,6 +776,7 @@ const DESAFIOS_DEF=[
 ];
 
 let state={nome:'',xp:0,modulos:{},badges:[],desafios:[],iniciado:new Date().toISOString(),diasModulos:{}};
+let TURMA_ATIVA=(function(){try{return localStorage.getItem('aca_turma_ativa')||'Junho 2026';}catch(e){return 'Junho 2026';}})();
 let quiz={moduloId:null,banco:[],questoes:[],idx:0,acertos:0,erros:[],respondeu:false,inicio:null,indicesErros:[]};
 let forca={marcoId:null,moduloId:null,palavra:'',corretas:new Set(),erradas:new Set(),vidas:6,done:false};
 
@@ -792,7 +793,9 @@ function entrar(){
   state.nome=nome;
   carregar(nome);
   try{localStorage.setItem('aca_ultimo_nome',nome);}catch(e){}
-  inicializarModulos();salvar();showDash();
+  inicializarModulos();salvar();
+  sndStart();
+  showDash();
 }
 function sairPerfil(){
   if(confirm('Sair do seu perfil? Seu progresso está salvo e você pode retornar depois.')){
@@ -972,7 +975,7 @@ function responder(chosen,opts,q){
 }
 
 function nextQ(){quiz.idx++;quiz.idx>=quiz.questoes.length?mostrarResultado():renderQ();}
-function exitQuiz(){if(confirm('Sair? O progresso desta sessão não será salvo.'))showDash();}
+function exitQuiz(){if(confirm('Sair? O progresso desta sessão não será salvo.')){try{pararMusicaFundo();}catch(e){}showDash();}}
 
 function mostrarResultado(){
   const m=TRILHA.find(x=>x.id===quiz.moduloId);
@@ -1134,7 +1137,7 @@ function compartilharXP(){
   sync.textContent='Publicando...';
   const obr=TRILHA.filter(x=>!x.extra);
   const entry={nome:state.nome,xp:state.xp,modulos:TRILHA.filter(m=>state.modulos[m.id]?.concluido).length,pct:obr.length>0?Math.round(obr.filter(m=>state.modulos[m.id]?.concluido).length/obr.length*100):0,ts:Date.now()};
-  fetch(SHEETS_URL,{method:'POST',body:JSON.stringify(entry)})
+  fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(entry)})
     .then(r=>r.json())
     .then(()=>{sync.textContent='✓ XP publicado!';renderRanking();})
     .catch(()=>{sync.textContent='Erro ao publicar. Tente novamente.';});
@@ -1142,9 +1145,11 @@ function compartilharXP(){
 function renderRanking(){
   const l=document.getElementById('ranking-list');
   l.innerHTML='<div class="ranking-empty">Carregando...</div>';
-  fetch(SHEETS_URL)
+  fetch(SHEETS_URL,{cache:'no-store'})
     .then(r=>r.json())
-    .then(data=>{
+    .then(allData=>{
+      // Filtra só a turma ativa (registros sem turma = turmas antigas, não aparecem)
+      const data=allData.filter(x=>(x.turma||'')===TURMA_ATIVA);
       data.sort((a,b)=>b.xp-a.xp);
       l.innerHTML='';
       if(data.length===0){l.innerHTML='<div class="ranking-empty">Nenhum resultado publicado ainda.</div>';return;}
@@ -1172,18 +1177,141 @@ function verificarSenha(){
   if(s==='ACA2026!'){renderPainel();}
   else{document.getElementById('painel-erro').textContent='Senha incorreta.';}
 }
+// renderPainel v2 - usa variável global e tabs funcionando
+let _painelDados = [];
+let _painelTodos = [];
+let _turmasDisponiveis = [];
+let _painelTurmaFiltro = TURMA_ATIVA;
+let _painelTab = 'geral';
+
 function renderPainel(){
   const div=document.getElementById('painel-conteudo');
-  div.innerHTML='<h2 style="margin-bottom:8px">📊 Painel da Gestora</h2><p style="color:var(--ink2);margin-bottom:20px">Carregando dados...</p>';
-  fetch(SHEETS_URL)
-    .then(r=>r.json())
-    .then(r=>{
-      r.sort((a,b)=>b.xp-a.xp);
-      if(r.length===0){div.innerHTML='<h2 style="margin-bottom:8px">📊 Painel da Gestora</h2><p style="color:var(--ink2);margin-bottom:20px">Nenhum consultor publicou XP ainda.</p><button class="btn-back" onclick="showDash()">← Voltar</button>';return;}
-      let rows=r.map((x,i)=>'<tr><td>'+(i+1)+'º</td><td>'+x.nome+'</td><td>'+x.xp+' XP</td><td>'+x.modulos+' módulos</td><td>'+x.pct+'%</td><td>'+new Date(x.ts).toLocaleDateString('pt-BR')+'</td></tr>').join('');
-      div.innerHTML='<h2 style="margin-bottom:4px">📊 Painel da Gestora</h2><p style="color:var(--ink2);font-size:13px;margin-bottom:20px">Dados em tempo real via Google Sheets. '+r.length+' participante'+(r.length>1?'s':'')+'.</p><div style="overflow-x:auto"><table class="painel-table"><thead><tr><th>Pos.</th><th>Nome</th><th>XP</th><th>Módulos</th><th>Trilha</th><th>Último acesso</th></tr></thead><tbody>'+rows+'</tbody></table></div><button class="btn-back" onclick="showDash()">← Voltar</button>';
+  div.innerHTML='<h2 style="margin-bottom:8px">📊 Painel da Gestora</h2><p style="color:var(--ink2);font-size:13px">Carregando...</p>';
+  fetch(SHEETS_URL,{cache:'no-store'})
+    .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(allData=>{
+      _painelTodos=allData;
+      // Lista de turmas disponíveis
+      _turmasDisponiveis=[...new Set(allData.map(x=>x.turma||'(sem turma)'))];
+      _painelDados=allData.filter(x=>(x.turma||'(sem turma)')===_painelTurmaFiltro).sort((a,b)=>b.xp-a.xp);
+      _renderPainelUI();
     })
-    .catch(()=>{div.innerHTML='<h2 style="margin-bottom:8px">📊 Painel da Gestora</h2><p style="color:var(--red)">Erro ao carregar. Verifique a conexão.</p><div style="margin-top:12px"><button class="btn-back" onclick="showDash()">← Voltar</button></div>';});
+    .catch(err=>{
+      div.innerHTML='<h2 style="margin-bottom:8px">📊 Painel da Gestora</h2>'+
+        '<p style="color:var(--red);margin-bottom:16px">Erro ao carregar dados.<br><small>'+err.message+'</small></p>'+
+        '<button class="btn-primary" onclick="renderPainel()" style="margin-bottom:10px">Tentar novamente</button><br>'+
+        '<button class="btn-back" onclick="showDash()">← Voltar</button>';
+    });
+}
+
+function _renderPainelUI(){
+  const div=document.getElementById('painel-conteudo');
+  const d=_painelDados;
+  if(d.length===0){
+    div.innerHTML='<h2>📊 Painel da Gestora</h2><p style="color:var(--ink2);margin:16px 0">Nenhum consultor publicou XP ainda.</p><button class="btn-back" onclick="showDash()">← Voltar</button>';
+    return;
+  }
+  div.innerHTML=
+    '<h2 style="margin-bottom:4px">📊 Painel da Gestora</h2>'+
+    '<p style="color:var(--ink2);font-size:12px;margin-bottom:12px">'+d.length+' participante'+(d.length!==1?'s':'')+' na turma · <a href="#" onclick="renderPainel();return false;" style="color:var(--accent)">atualizar</a></p>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">'+
+      '<span style="font-size:11px;color:var(--ink3);font-weight:700;text-transform:uppercase;letter-spacing:0.05em">Turma:</span>'+
+      _turmasDisponiveis.map(function(t){return '<button class="painel-tab '+(t===_painelTurmaFiltro?"active":"")+'" onclick="_filtrarTurma(`'+t+'`)">'+t+'</button>';}).join('')+
+    '</div>'+
+    '<div class="painel-tabs">'+
+      '<button class="painel-tab '+(_painelTab==="geral"?"active":"")+'" onclick="_mudarTabPainel(`geral`)">Geral</button>'+
+      '<button class="painel-tab '+(_painelTab==="detalhes"?"active":"")+'" onclick="_mudarTabPainel(`detalhes`)">Por pessoa</button>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">'+
+      '<button class="btn-export" onclick="_exportarCSV()">⬇ Exportar CSV</button>'+
+      '<button class="btn-export" onclick="_gerenciarTurmas()">🎓 Trocar turma ativa</button>'+
+    '</div>'+
+    '<div id="painel-tab-content"></div>'+
+    '<button class="btn-back" style="margin-top:16px" onclick="showDash()">← Voltar</button>';
+  _renderTabPainel();
+}
+
+function _mudarTabPainel(tab){
+  _painelTab=tab;
+  document.querySelectorAll('.painel-tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  _renderTabPainel();
+}
+
+function _renderTabPainel(){
+  const c=document.getElementById('painel-tab-content');
+  if(!c)return;
+  const d=_painelDados;
+  if(_painelTab==='geral'){
+    const rows=d.map((x,i)=>'<tr>'+
+      '<td>'+(i+1)+'º</td>'+
+      '<td>'+(x.certificado?'🏆 ':'')+x.nome+'</td>'+
+      '<td style="color:var(--gold);font-weight:700">'+x.xp+' XP</td>'+
+      '<td>'+x.modulos+'</td>'+
+      '<td>'+(x.pct||0)+'%</td>'+
+      '<td>'+(x.tentativas||0)+'</td>'+
+      '<td>'+new Date(x.ts).toLocaleDateString('pt-BR')+'</td>'+
+    '</tr>').join('');
+    c.innerHTML='<div style="overflow-x:auto"><table class="painel-table">'+
+      '<thead><tr><th>Pos</th><th>Nome</th><th>XP</th><th>Módulos</th><th>Trilha</th><th>Tentativas</th><th>Último acesso</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody></table></div>';
+  } else {
+    c.innerHTML=d.map(x=>{
+      const ini=x.nome.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
+      const det=(typeof x.detalhes==='object'&&x.detalhes!==null)?x.detalhes:{};
+      const mods=TRILHA.filter(m=>m.tipo==='quiz');
+      const modsMini=mods.map(m=>{
+        const ok=det[m.id]&&det[m.id].concluido;
+        const sc=det[m.id]?Math.round((det[m.id].melhorScore||0)/6*100)+'%':'';
+        return '<span class="painel-mod-mini'+(ok?'':' pending')+'" title="'+m.titulo+(ok?' — '+sc:'')+'">'+
+          (ok?'✓':'-')+' '+m.titulo.split(' ').slice(0,2).join(' ')+'</span>';
+      }).join('');
+      return '<div class="painel-pessoa-card">'+
+        '<div class="painel-pessoa-top">'+
+          '<div class="painel-pessoa-av">'+ini+'</div>'+
+          '<div class="painel-pessoa-info">'+
+            '<div class="painel-pessoa-nome">'+(x.certificado?'🏆 ':'')+x.nome+'</div>'+
+            '<div class="painel-pessoa-sub">'+(x.tentativas||0)+' tentativas · '+(x.pct||0)+'% da trilha</div>'+
+          '</div>'+
+          '<div class="painel-pessoa-xp">'+x.xp+' XP</div>'+
+        '</div>'+
+        '<div class="painel-modulos-mini">'+modsMini+'</div>'+
+      '</div>';
+    }).join('');
+  }
+}
+
+function _exportarCSV(){
+  var d=_painelDados;
+  if(!d.length){alert('Sem dados para exportar.');return;}
+  var header='Nome,XP,Modulos,% Trilha,Tentativas,Certificado,Ultimo acesso\r\n';
+  var rows=d.map(function(x){
+    return ['"'+x.nome+'"',x.xp,x.modulos,(x.pct||0),(x.tentativas||0),(x.certificado?'Sim':'Nao'),new Date(x.ts).toLocaleDateString('pt-BR')].join(',');
+  }).join('\r\n');
+  var blob=new Blob(['\ufeff'+header+rows],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  a.download='ACA_Ranking_'+new Date().toLocaleDateString('pt-BR').replace(/[/]/g,'-')+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function _filtrarTurma(t){
+  _painelTurmaFiltro=t;
+  _painelDados=_painelTodos.filter(function(x){return (x.turma||'(sem turma)')===t;}).sort(function(a,b){return b.xp-a.xp;});
+  _renderPainelUI();
+}
+
+function _gerenciarTurmas(){
+  const atual=TURMA_ATIVA;
+  const nova=prompt('Turma ativa atual: '+atual+'\n\nDigite o nome da NOVA turma para começar do zero no ranking.\n\nOs dados das turmas anteriores ficam salvos na planilha, mas somem do ranking visível.\n\nExemplos: "Julho 2026", "Turma SP", "Embarque Agosto"',atual);
+  if(nova&&nova.trim()){
+    TURMA_ATIVA=nova.trim();
+    try{localStorage.setItem('aca_turma_ativa',TURMA_ATIVA);}catch(e){}
+    showToast('🎓','Turma alterada','Ranking agora mostra: '+TURMA_ATIVA,'accent',4000);
+    renderPainel();
+  }
 }
 
 function ganharBadge(id){if(!state.badges.includes(id))state.badges.push(id);}
@@ -1240,7 +1368,17 @@ try{
 let volOn=true;
 const AudioCtx=window.AudioContext||window.webkitAudioContext;
 let actx=null;
-function getACtx(){if(!actx)actx=new AudioCtx();return actx;}
+function getACtx(){
+  if(!actx) actx=new AudioCtx();
+  if(actx.state==='suspended') actx.resume();
+  return actx;
+}
+// Desbloqueia AudioContext no primeiro toque
+document.addEventListener('click',function unblock(){
+  if(!actx) actx=new AudioCtx();
+  if(actx.state==='suspended') actx.resume();
+  document.removeEventListener('click',unblock);
+},{once:true});
 function toggleVol(){volOn=!volOn;document.getElementById('vol-btn').textContent=volOn?'🔊':'🔇';}
 
 function playTone(freq,dur,type='sine',vol=0.3,delay=0){
@@ -1282,6 +1420,44 @@ function sndStart(){
   [392,523,659,784].forEach((f,i)=>playTone(f,0.15,'sine',0.25,i*0.12));
 }
 
+/* ══ MÚSICA DE FUNDO ══ */
+let musicaAtiva=false;
+let musicaNodes=[];
+let musicaTimeout=null;
+
+function tocarMusicaFundo(){
+  if(!volOn||musicaAtiva)return;
+  musicaAtiva=true;
+  const a=getACtx();
+  // Melodia simples e alegre em loop (notas de uma escala maior)
+  const melodia=[523,587,659,784,659,587,523,659,784,880,784,659];
+  const dur=0.4;
+  let i=0;
+  function nota(){
+    if(!musicaAtiva)return;
+    const freq=melodia[i%melodia.length];
+    try{
+      const o=a.createOscillator();
+      const g=a.createGain();
+      o.connect(g);g.connect(a.destination);
+      o.type='sine';o.frequency.value=freq;
+      const t=a.currentTime;
+      g.gain.setValueAtTime(0.06,t);
+      g.gain.exponentialRampToValueAtTime(0.001,t+dur*0.9);
+      o.start(t);o.stop(t+dur);
+    }catch(e){}
+    i++;
+    musicaTimeout=setTimeout(nota,dur*1000);
+  }
+  nota();
+}
+
+function pararMusicaFundo(){
+  musicaAtiva=false;
+  if(musicaTimeout)clearTimeout(musicaTimeout);
+}
+
+
 /* ══ TOASTS ══ */
 function showToast(icon,title,msg,type='',dur=3500){
   const c=document.getElementById('toast-container');
@@ -1311,8 +1487,7 @@ function toastDesafio(d){
 /* ══ SOBRESCREVE responder() para adicionar sons e toasts ══ */
 const _responderOrig = responder;
 responder = function(chosen, opts, q) {
-  const isOk = chosen.ok === true;
-  if(isOk) sndCorrect(); else sndWrong();
+  try{const isOk=chosen.ok===true;if(isOk)sndCorrect();else sndWrong();}catch(e){}
   _responderOrig(chosen, opts, q);
 };
 
@@ -1346,27 +1521,30 @@ function ganharDesafioComToast(id) {
 /* ══ SOBRESCREVE mostrarResultado() para sons e toasts de nível ══ */
 const _mostrarResultadoOrig = mostrarResultado;
 mostrarResultado = function() {
-  const nivelAntes = getNivel(state.xp).n;
-  _mostrarResultadoOrig();
-  const nivelDepois = getNivel(state.xp).n;
-  if(nivelDepois > nivelAntes) {
-    setTimeout(()=>toastNivel(getNivel(state.xp)), 1000);
-  }
-  const passou = Math.round(quiz.acertos/quiz.questoes.length*100) >= 75;
-  if(passou) setTimeout(sndModulo, 300);
+  try{pararMusicaFundo();}catch(e){}
+  try {
+    const nivelAntes = getNivel(state.xp).n;
+    const acAntes = quiz.acertos;
+    const totalAntes = (quiz.questoes && quiz.questoes.length) || 6;
+    _mostrarResultadoOrig();
+    const nivelDepois = getNivel(state.xp).n;
+    if(nivelDepois > nivelAntes) setTimeout(()=>toastNivel(getNivel(state.xp)), 1000);
+    if(Math.round(acAntes/totalAntes*100) >= 75) setTimeout(sndModulo, 300);
+  } catch(e) { _mostrarResultadoOrig(); }
 };
 
 /* ══ SOM ao iniciar módulo ══ */
 const _iniciarModuloOrig = iniciarModulo;
 iniciarModulo = function(id) {
-  sndStart();
+  try{sndStart();}catch(e){}
   _iniciarModuloOrig(id);
+  setTimeout(()=>{try{tocarMusicaFundo();}catch(e){}},600);
 };
 
 /* ══ SOM próxima questão ══ */
 const _nextQOrig = nextQ;
 nextQ = function() {
-  sndNext();
+  try{sndNext();}catch(e){}
   _nextQOrig();
 };
 
@@ -1430,28 +1608,41 @@ function renderColHostSelecao(){
 
 function iniciarColetivoModulo(id){
   const m=TRILHA.find(x=>x.id===id);
+  if(!m){alert('Módulo não encontrado.');return;}
+  const c=document.getElementById('col-host-content');
+  c.innerHTML='<div class="col-status"><span class="col-status-emoji">⏳</span><h3>Iniciando...</h3><p>Publicando questões para a turma.</p></div>';
   coletivoState.moduloId=id;coletivoState.qIdx=0;coletivoState.revealed=false;
   document.getElementById('col-host-titulo').textContent=m.titulo;
-  // Monta questões
   const bancoTotal=BANCO[m.banco]||[];
   coletivoState.questoes=shuffle([...bancoTotal]).slice(0,6);
   sndStart();
-  publicarEstadoColetivo();
-  renderColHostQuestao();
+  // Publica e só então renderiza
+  const payload={type:'host',active:true,moduloId:id,qIdx:0,revealed:false,questoes:coletivoState.questoes,ts:Date.now()};
+  fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
+    .then(r=>r.json())
+    .then(()=>renderColHostQuestao())
+    .catch(()=>{
+      // Mesmo com erro, renderiza localmente
+      renderColHostQuestao();
+      showToast('⚠️','Aviso','Modo offline — alunos podem não sincronizar.','accent');
+    });
 }
 
 function publicarEstadoColetivo(){
   if(!SHEETS_URL)return;
   const payload={
     type:'host',
-    active:coletivoState.ativo,
+    active:true,
     moduloId:coletivoState.moduloId,
     qIdx:coletivoState.qIdx,
     revealed:coletivoState.revealed,
     questoes:coletivoState.questoes,
     ts:Date.now()
   };
-  fetch(SHEETS_URL,{method:'POST',body:JSON.stringify(payload)}).catch(()=>{});
+  fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
+    .then(r=>r.json())
+    .then(d=>{if(!d.ok)console.warn('Erro ao publicar estado coletivo');})
+    .catch(err=>console.warn('Erro coletivo:',err));
 }
 
 function renderColHostQuestao(){
@@ -1496,7 +1687,7 @@ function encerrarColetivo(){
   coletivoState.ativo=false;
   if(coletivoState.poll)clearInterval(coletivoState.poll);
   // Envia estado inativo
-  fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({type:'host',active:false,ts:Date.now()})}).catch(()=>{});
+  fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({type:'host',active:false,ts:Date.now()})}).catch(()=>{});
   showDash();
 }
 
@@ -1514,25 +1705,40 @@ let _ultimoRevealed=false;
 
 function pollColetivoAluno(){
   if(!SHEETS_URL)return;
-  fetch(SHEETS_URL+'?action=host')
-    .then(r=>r.json())
+  fetch(SHEETS_URL+'?action=host',{cache:'no-store'})
+    .then(r=>{
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return r.json();
+    })
     .then(data=>{
-      if(!data||!data.active){
-        clearInterval(coletivoState.poll);
-        document.getElementById('col-aluno-content').innerHTML=
-          '<div class="col-status"><span class="col-status-emoji">✅</span><h3>Encerrado!</h3><p>O professor encerrou o modo coletivo.</p></div>'+
-          '<button class="btn-primary" onclick="showDash()" style="margin-top:16px">Voltar ao portal</button>';
+      // Se não tem dado ou está inativo
+      if(!data||data.active===false){
+        // Só encerra se já tínhamos recebido pelo menos uma questão
+        if(_ultimoQIdx>=0){
+          clearInterval(coletivoState.poll);
+          document.getElementById('col-aluno-content').innerHTML=
+            '<div class="col-status"><span class="col-status-emoji">✅</span><h3>Encerrado!</h3><p>O professor encerrou o modo coletivo.</p></div>'+
+            '<button class="btn-primary" onclick="showDash()" style="margin-top:16px">Voltar ao portal</button>';
+        }
         return;
       }
-      if(data.qIdx!==_ultimoQIdx||data.revealed!==_ultimoRevealed){
+      // Nova questão ou revelação
+      const mudouQ=data.qIdx!==_ultimoQIdx;
+      const mudouRev=data.revealed!==_ultimoRevealed;
+      if(mudouQ||mudouRev){
+        if(mudouQ&&_ultimoQIdx>=0)sndNext();
         _ultimoQIdx=data.qIdx;
         _ultimoRevealed=data.revealed;
-        renderColAlunoQuestao(data);
-        if(data.qIdx>coletivoState.qIdx)sndNext();
         coletivoState.qIdx=data.qIdx;
         coletivoState.questoes=data.questoes;
+        _alunoRespondeu=false;
+        renderColAlunoQuestao(data);
       }
-    }).catch(()=>{});
+    })
+    .catch(err=>{
+      // Erro de rede — mantém tela atual, tenta de novo no próximo poll
+      console.warn('Poll erro:',err);
+    });
 }
 
 let _alunoRespondeu=false;
@@ -1586,65 +1792,8 @@ function sairColetivo(){
 
 /* ══ PAINEL EXPANDIDO ══ */
 let painelTab='geral';
-function renderPainel(){
-  const div=document.getElementById('painel-conteudo');
-  div.innerHTML='<h2 style="margin-bottom:8px">📊 Painel da Gestora</h2><p style="color:var(--ink2);margin-bottom:16px;font-size:13px">Carregando dados...</p>';
-  fetch(SHEETS_URL)
-    .then(r=>r.json())
-    .then(data=>{
-      data.sort((a,b)=>b.xp-a.xp);
-      div.innerHTML=
-        '<h2 style="margin-bottom:4px">📊 Painel da Gestora</h2>'+
-        '<p style="color:var(--ink2);font-size:12px;margin-bottom:16px">'+data.length+' participante'+(data.length!==1?'s':'')+' · atualizado agora</p>'+
-        '<div class="painel-tabs">'+
-          '<button class="painel-tab '+(painelTab==='geral'?'active':'')+'" onclick="painelMudarTab(\'geral\')">Geral</button>'+
-          '<button class="painel-tab '+(painelTab==='detalhes'?'active':'')+'" onclick="painelMudarTab(\'detalhes\')">Por pessoa</button>'+
-        '</div>'+
-        '<button class="btn-export" onclick="exportarPlanilha('+JSON.stringify(data).replace(/</g,'&lt;')+')">⬇ Exportar CSV</button>'+
-        '<div id="painel-tab-content"></div>'+
-        '<button class="btn-back" style="margin-top:16px" onclick="showDash()">← Voltar</button>';
-      renderPainelTab(data);
-    })
-    .catch(()=>{div.innerHTML='<p style="color:var(--red)">Erro ao carregar.</p><button class="btn-back" onclick="showDash()">← Voltar</button>';});
-}
+// Funções do painel redefinidas acima
 
-function painelMudarTab(tab){
-  painelTab=tab;
-  document.querySelectorAll('.painel-tab').forEach(t=>t.classList.remove('active'));
-  event.target.classList.add('active');
-  fetch(SHEETS_URL).then(r=>r.json()).then(data=>{data.sort((a,b)=>b.xp-a.xp);renderPainelTab(data);}).catch(()=>{});
-}
-
-function renderPainelTab(data){
-  const c=document.getElementById('painel-tab-content');
-  if(painelTab==='geral'){
-    const rows=data.map((x,i)=>'<tr><td>'+(i+1)+'º</td><td>'+(x.certificado?'🏆 ':'')+x.nome+'</td><td>'+x.xp+' XP</td><td>'+x.modulos+'</td><td>'+x.pct+'%</td><td>'+x.tentativas+'</td><td>'+new Date(x.ts).toLocaleDateString('pt-BR')+'</td></tr>').join('');
-    c.innerHTML='<div style="overflow-x:auto"><table class="painel-table"><thead><tr><th>Pos</th><th>Nome</th><th>XP</th><th>Módulos</th><th>Trilha</th><th>Tentativas</th><th>Último acesso</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
-  } else {
-    c.innerHTML=data.map(x=>{
-      const ini=x.nome.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
-      const det=x.detalhes||{};
-      const modsMini=TRILHA.filter(m=>m.tipo==='quiz').map(m=>'<span class="painel-mod-mini '+(det[m.id]?'':' pending')+'">'+(det[m.id]?'✓':'-')+' '+m.titulo.split(' ').slice(0,2).join(' ')+'</span>').join('');
-      return '<div class="painel-pessoa-card">'+
-        '<div class="painel-pessoa-top">'+
-          '<div class="painel-pessoa-av">'+ini+'</div>'+
-          '<div class="painel-pessoa-info"><div class="painel-pessoa-nome">'+(x.certificado?'🏆 ':'')+x.nome+'</div><div class="painel-pessoa-sub">'+x.tentativas+' tentativas · '+x.pct+'% da trilha</div></div>'+
-          '<div class="painel-pessoa-xp">'+x.xp+' XP</div>'+
-        '</div>'+
-        '<div class="painel-modulos-mini">'+modsMini+'</div>'+
-      '</div>';
-    }).join('');
-  }
-}
-
-function exportarPlanilha(data){
-  const header='Nome,XP,Módulos,% Trilha,Tentativas,Certificado,Último acesso\n';
-  const rows=data.map(x=>[x.nome,x.xp,x.modulos,x.pct,x.tentativas||0,x.certificado?'Sim':'Não',new Date(x.ts).toLocaleDateString('pt-BR')].join(',')).join('\n');
-  const blob=new Blob(['\uFEFF'+header+rows],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='ACA_Ranking_'+new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')+'.csv';a.click();
-  URL.revokeObjectURL(url);
-}
 
 /* ══ PUBLICA DADOS EXPANDIDOS ══ */
 const _compartilharXPOrig = compartilharXP;
@@ -1666,9 +1815,10 @@ compartilharXP = function() {
     ts:Date.now(),
     detalhes,
     tentativas:Object.values(state.modulos).reduce((a,m)=>a+(m.tentativas||0),0),
-    certificado:TRILHA.filter(x=>!x.extra).every(x=>state.modulos[x.id]?.concluido)
+    certificado:TRILHA.filter(x=>!x.extra).every(x=>state.modulos[x.id]?.concluido),
+    turma:TURMA_ATIVA
   };
-  fetch(SHEETS_URL,{method:'POST',body:JSON.stringify(entry)})
+  fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(entry)})
     .then(r=>r.json())
     .then(()=>{sync.textContent='✓ XP publicado!';showToast('📤','XP publicado!','Você aparece no ranking agora.','green');})
     .catch(()=>{sync.textContent='Erro ao publicar. Tente novamente.';});
