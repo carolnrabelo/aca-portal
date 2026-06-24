@@ -963,7 +963,9 @@ function renderQ(){
     list.appendChild(btn);
   });
   document.getElementById('feedback').className='feedback';
-  document.getElementById('btn-next').className='btn-next';
+  var _btnNext=document.getElementById('btn-next');
+  _btnNext.className='btn-next';
+  _btnNext.disabled=false;
   document.getElementById('xp-earned').style.display='none';
   quiz.respondeu=false;
 }
@@ -995,7 +997,7 @@ function responder(chosen,opts,q){
     fb.className='feedback ok show';
     document.getElementById('fb-icon').textContent='✓';
     document.getElementById('fb-label').textContent='Isso aí!';
-    document.getElementById('xp-earned').style.display='inline-flex';
+    // XP será dado no resultado se passar — não mostra +10 por acerto individual
     const elapsed=(Date.now()-quiz.inicio)/1000;
     if(elapsed<300&&quiz.idx===5)ganharDesafio('veloz_d');
   }else{
@@ -1354,6 +1356,7 @@ function _renderPainelUI(){
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">'+
       '<button class="btn-export" onclick="_exportarCSV()">⬇ Exportar CSV</button>'+
       '<button class="btn-export" onclick="_gerenciarTurmas()">🎓 Trocar turma ativa</button>'+
+      '<button class="btn-export" onclick="_resetarRanking()" style="border-color:var(--red);color:var(--red)">🗑️ Apagar ranking desta turma</button>'+
     '</div>'+
     '<div id="painel-tab-content"></div>'+
     '<button class="btn-back" style="margin-top:16px" onclick="showDash()">← Voltar</button>';
@@ -1430,6 +1433,34 @@ function _filtrarTurma(t){
   _painelTurmaFiltro=t;
   _painelDados=_painelTodos.filter(function(x){return (x.turma||'(sem turma)')===t;}).sort(function(a,b){return b.xp-a.xp;});
   _renderPainelUI();
+}
+
+function _resetarRanking(){
+  var turma=_painelTurmaFiltro||TURMA_ATIVA||'(sem turma)';
+  var confirm1=confirm('⚠️ ATENÇÃO\n\nIsso vai apagar todos os registros da turma "'+turma+'" do ranking.\n\nO progresso individual de cada consultor no celular NÃO será apagado — eles continuam de onde pararam.\n\nDeseja continuar?');
+  if(!confirm1)return;
+  var confirm2=confirm('Tem certeza? Esta ação não pode ser desfeita.\n\nTurma: "'+turma+'"');
+  if(!confirm2)return;
+  // Envia comando de reset para o Apps Script
+  var div=document.getElementById('painel-conteudo');
+  div.innerHTML+='<p style="color:var(--accent);font-size:13px;margin-top:12px">Apagando registros...</p>';
+  fetch(SHEETS_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({type:'reset_ranking',turma:turma})
+  })
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.ok){
+      try{showToast('🗑️','Ranking resetado','Registros da turma "'+turma+'" apagados.','accent',4000);}catch(e){}
+      setTimeout(function(){renderPainel();},500);
+    } else {
+      alert('Erro ao resetar: '+(d.error||'tente novamente'));
+    }
+  })
+  .catch(function(){
+    alert('Erro de conexão. Verifique o Apps Script.');
+  });
 }
 
 function _gerenciarTurmas(){
