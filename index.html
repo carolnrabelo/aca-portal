@@ -1445,17 +1445,11 @@ function _resetarRanking(){
   // Envia comando de reset para o Apps Script
   var div=document.getElementById('painel-conteudo');
   div.innerHTML+='<p style="color:var(--accent);font-size:13px;margin-top:12px">Apagando registros...</p>';
-  // Para reset, tenta com cors primeiro, fallback para no-cors
   var _resetPayload=JSON.stringify({type:'reset_ranking',turma:turma});
-  fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:_resetPayload})
-  .then(function(r){try{return r.json();}catch(e){return {ok:true};}}).catch(function(){return {ok:true};})
-  .then(function(d){
-    if(d.ok){
-      try{showToast('🗑️','Ranking resetado','Registros da turma "'+turma+'" apagados.','accent',4000);}catch(e){}
-      setTimeout(function(){renderPainel();},500);
-    } else {
-      alert('Erro ao resetar: '+(d.error||'tente novamente'));
-    }
+  fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:_resetPayload})
+  .then(function(){
+    try{showToast('🗑️','Ranking resetado','Registros da turma "'+turma+'" apagados.','accent',4000);}catch(e){}
+    setTimeout(function(){renderPainel();},1000);
   })
   .catch(function(){
     alert('Erro de conexão. Verifique o Apps Script.');
@@ -1976,11 +1970,11 @@ compartilharXP = function() {
     certificado:certificado,
     tentativas:tentativas
   };
-  fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(entry)})
-    .then(function(r){return r.json();})
+  fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(entry)})
     .then(function(){
       sync.textContent='✓ XP publicado!';
       try{showToast('📤','XP publicado!','Você aparece no ranking agora.','green');}catch(e){}
+      setTimeout(function(){renderRanking();},1500);
     })
     .catch(function(){sync.textContent='Erro ao publicar. Tente novamente.';});
 };
