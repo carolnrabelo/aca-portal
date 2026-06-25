@@ -139,10 +139,11 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--ink);min-
 .feedback.ok .fb-label{color:var(--green);}
 .feedback.err .fb-label{color:var(--red);}
 .fb-text{font-size:13px;line-height:1.65;color:var(--ink2);}
-.xp-earned{display:inline-flex;align-items:center;gap:4px;background:rgba(212,168,67,0.15);color:var(--gold);font-size:11px;font-weight:800;padding:3px 10px;border-radius:10px;margin-top:8px;}
-.btn-next{width:100%;padding:15px;background:var(--accent);color:white;border:none;border-radius:var(--radius-lg);font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;display:none;}
+/* .xp-earned removido */
+.btn-next{position:fixed;bottom:0;left:0;right:0;padding:18px 24px;background:var(--accent);color:white;border:none;border-radius:0;font-family:'Poppins',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:all 0.2s;display:none;z-index:200;box-shadow:0 -4px 20px rgba(0,0,0,0.3);}
 .btn-next:hover{background:var(--accent2);}
 .btn-next.show{display:block;}
+.quiz-body{padding-bottom:80px;}
 #modulo-resultado{align-items:center;justify-content:center;padding:40px 24px;background:var(--bg);}
 .res-inner{max-width:500px;width:100%;}
 .res-top{text-align:center;margin-bottom:28px;}
@@ -427,7 +428,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--ink);min-
     <div class="feedback" id="feedback">
       <div class="fb-top"><div class="fb-icon" id="fb-icon"></div><span class="fb-label" id="fb-label"></span></div>
       <div class="fb-text" id="fb-text"></div>
-      <div class="xp-earned" id="xp-earned" style="display:none">+10 XP</div>
+      <!-- xp-earned removido: XP só ao passar módulo -->
     </div>
     <button class="btn-next" id="btn-next" onclick="nextQ()"></button>
   </div>
@@ -966,7 +967,7 @@ function renderQ(){
   var _btnNext=document.getElementById('btn-next');
   _btnNext.className='btn-next';
   _btnNext.disabled=false;
-  document.getElementById('xp-earned').style.display='none';
+  // xp-earned removido
   quiz.respondeu=false;
 }
 
@@ -1217,7 +1218,7 @@ const SHEETS_URL='https://script.google.com/macros/s/AKfycbxzMhoBqupZJWgOj_RyaW-
 function _enviarSheets(tipo, dados){
   if(!SHEETS_URL)return;
   const payload=Object.assign({type:tipo,nome:state.nome,turma:state.turma||TURMA_ATIVA},dados);
-  fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)}).catch(()=>{});
+  fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)}).catch(()=>{});
 }
 
 function _enviarQuestao(questaoId, acertou, tempoSeg){
@@ -1258,7 +1259,7 @@ function _enviarSessaoFim(){
 function renderRanking(){
   const l=document.getElementById('ranking-list');
   l.innerHTML='<div class="ranking-empty">Carregando...</div>';
-  fetch(SHEETS_URL,{cache:'no-store'})
+  fetch(SHEETS_URL,{cache:'no-store',redirect:'follow'})
     .then(r=>r.json())
     .then(allData=>{
       // Filtra só a turma ativa (registros sem turma = turmas antigas, não aparecem)
@@ -1318,7 +1319,7 @@ function renderPainel(){
   if(!_painelAutenticado){showPainel();return;}
   const div=document.getElementById('painel-conteudo');
   div.innerHTML='<h2 style="margin-bottom:8px">📊 Painel da Gestora</h2><p style="color:var(--ink2);font-size:13px">Carregando...</p>';
-  fetch(SHEETS_URL,{cache:'no-store'})
+  fetch(SHEETS_URL,{cache:'no-store',redirect:'follow'})
     .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     .then(allData=>{
       _painelTodos=allData;
@@ -1444,12 +1445,10 @@ function _resetarRanking(){
   // Envia comando de reset para o Apps Script
   var div=document.getElementById('painel-conteudo');
   div.innerHTML+='<p style="color:var(--accent);font-size:13px;margin-top:12px">Apagando registros...</p>';
-  fetch(SHEETS_URL,{
-    method:'POST',
-    headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({type:'reset_ranking',turma:turma})
-  })
-  .then(function(r){return r.json();})
+  // Para reset, tenta com cors primeiro, fallback para no-cors
+  var _resetPayload=JSON.stringify({type:'reset_ranking',turma:turma});
+  fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:_resetPayload})
+  .then(function(r){try{return r.json();}catch(e){return {ok:true};}}).catch(function(){return {ok:true};})
   .then(function(d){
     if(d.ok){
       try{showToast('🗑️','Ranking resetado','Registros da turma "'+turma+'" apagados.','accent',4000);}catch(e){}
@@ -1668,16 +1667,7 @@ function toastDesafio(d){
 /* ══ SOBRESCREVE responder() para adicionar sons e toasts ══ */
 // responder sons integrados diretamente
 
-/* ══ SOBRESCREVE ganharBadge() para toast ══ */
-const _ganharBadgeOrig = ganharBadge;
-ganharBadge = function(id) {
-  const jatinha = state.badges.includes(id);
-  _ganharBadgeOrig(id);
-  if(!jainha && !jainha) {
-    // verifica se realmente ganhou agora
-  }
-};
-// Versão melhorada com toast
+// ganharBadge com toast já definida acima
 // ganharBadge e ganharDesafio já incluem toast
 
 /* ══ SOBRESCREVE mostrarResultado() para sons e toasts de nível ══ */
@@ -1856,7 +1846,7 @@ function encerrarColetivo(){
   coletivoState.ativo=false;
   if(coletivoState.poll)clearInterval(coletivoState.poll);
   // Envia estado inativo
-  fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({type:'host',active:false,ts:Date.now()})}).catch(()=>{});
+  fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({type:'host',active:false,ts:Date.now()})}).catch(()=>{});
   showDash();
 }
 
@@ -1874,7 +1864,7 @@ let _ultimoRevealed=false;
 
 function pollColetivoAluno(){
   if(!SHEETS_URL)return;
-  fetch(SHEETS_URL+'?action=host',{cache:'no-store'})
+  fetch(SHEETS_URL+'?action=host',{cache:'no-store',redirect:'follow'})
     .then(r=>{
       if(!r.ok)throw new Error('HTTP '+r.status);
       return r.json();
