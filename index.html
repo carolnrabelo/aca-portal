@@ -1533,9 +1533,9 @@ try{
     state.nome=ultimoNome;
     state.turma=ultimaTurma||TURMA_ATIVA;
     carregar(ultimoNome);
+    state._sessaoInicio=Date.now();   // <-- LINHA NOVA
     if(state.nome){inicializarModulos();showDash();}else{show('splash');}
-  }else{show('splash');}
-}catch(e){show('splash');}
+}else{show('splash');}
 
 
 /* ══ ÁUDIO ══ */
