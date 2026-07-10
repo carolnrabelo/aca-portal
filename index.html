@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -258,6 +259,9 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--ink);min-
 .cert-data{font-size:10px;color:var(--ink3);}
 .cert-xp{font-size:11px;font-weight:700;color:var(--gold);}
 .btn-cert{width:100%;padding:15px;background:var(--gold);color:#1A1000;border:none;border-radius:var(--radius-lg);font-family:'Poppins',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:all 0.2s;margin-bottom:10px;}
+.btn-cert-mini{padding:13px;background:var(--surface);color:var(--ink3);border:1px solid var(--border2);border-radius:var(--radius-lg);font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;cursor:not-allowed;transition:all 0.2s;}
+.btn-cert-mini.desbloqueado{background:var(--gold);color:#1A1000;cursor:pointer;border:none;}
+.btn-cert-mini:disabled{opacity:0.6;}
 .btn-cert:hover{transform:translateY(-2px);}
 .btn-back2{width:100%;padding:13px;background:var(--surface);color:var(--ink2);border:1px solid var(--border2);border-radius:var(--radius-lg);font-family:'Poppins',sans-serif;font-size:13px;cursor:pointer;transition:all 0.15s;}
 .btn-back2:hover{color:var(--ink);}
@@ -344,6 +348,8 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--ink);min-
 .btn-export:hover{border-color:var(--green);color:var(--green);}
 
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <canvas id="confetti-canvas"></canvas>
@@ -409,6 +415,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--ink);min-
     <div class="modulos-list" id="modulos-list"></div>
     <div class="section-label" style="margin-top:24px">Insígnias</div>
     <div class="badges-grid" id="badges-grid"></div>
+    <button class="btn-cert-mini" id="btn-baixar-cert-badges" disabled onclick="baixarCertificadoInsignias()" style="margin-top:16px;width:100%">🔒 Baixar Certificado (conclua a trilha)</button>
   </div>
 </div>
 <div id="quiz" class="screen">
@@ -490,6 +497,10 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--ink);min-
     <p>Clique em "Publicar meu XP" para aparecer no ranking.</p>
     <button class="btn-share" onclick="compartilharXP()">📤 Publicar meu XP</button>
     <div class="ranking-sync" id="ranking-sync"></div>
+    <div class="form-group" style="text-align:left;margin:12px 0">
+      <label style="font-size:11px;color:var(--ink2)">Filtrar por turma</label>
+      <select id="ranking-turma-select" onchange="renderRanking(this.value)" style="width:100%;padding:10px;border-radius:8px;background:var(--surface);color:var(--ink);border:1px solid var(--border2);font-family:'Poppins',sans-serif"></select>
+    </div>
     <div class="ranking-list" id="ranking-list"></div>
     <button class="btn-back" onclick="showDash()">← Voltar</button>
   </div>
@@ -534,7 +545,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--ink);min-
         <div class="cert-xp" id="cert-xp-total"></div>
       </div>
     </div>
-    <button class="btn-cert" onclick="abrirCertificadoHTML()">⬇ Baixar Certificado</button>
+    <button class="btn-cert" onclick="baixarCertificadoPDF()">⬇ Baixar Certificado</button>
     <button class="btn-back2" onclick="showDash()">← Voltar ao portal</button>
   </div>
 </div>
@@ -779,7 +790,7 @@ const DESAFIOS_DEF=[
   {id:'persistente_d',nome:'Persistente',emoji:'💪',desc:'Repita e passe em um módulo que errou'}
 ];
 
-let state={nome:'',xp:0,modulos:{},badges:[],desafios:[],iniciado:new Date().toISOString(),diasModulos:{}};
+let state={nome:'',xp:0,modulos:{},badges:[],desafios:[],iniciado:new Date().toISOString(),diasModulos:{},tempoTotalMin:0};
 let TURMA_ATIVA=(function(){try{return localStorage.getItem('aca_turma_ativa')||'Junho 2026';}catch(e){return 'Junho 2026';}})();
 let quiz={moduloId:null,banco:[],questoes:[],idx:0,acertos:0,erros:[],respondeu:false,inicio:null,indicesErros:[]};
 let forca={marcoId:null,moduloId:null,palavra:'',corretas:new Set(),erradas:new Set(),vidas:6,done:false};
@@ -801,7 +812,7 @@ function entrar(){
   // Atualiza turma ativa com o que a pessoa digitou
   TURMA_ATIVA=turma;
   try{localStorage.setItem('aca_turma_ativa',turma);}catch(e){}
-  state={nome:'',xp:0,modulos:{},badges:[],desafios:[],iniciado:new Date().toISOString(),diasModulos:{},turma:turma};
+  state={nome:'',xp:0,modulos:{},badges:[],desafios:[],iniciado:new Date().toISOString(),diasModulos:{},turma:turma,tempoTotalMin:0};
   state.nome=nome;
   carregar(nome);
   // Se já tinha progresso salvo, garante que a turma está correta
@@ -818,7 +829,7 @@ function sairPerfil(){
     try{_enviarSessaoFim();}catch(e){}
     try{localStorage.removeItem('aca_ultimo_nome');}catch(e){}
     try{localStorage.removeItem('aca_ultimo_turma');}catch(e){}
-    state={nome:'',xp:0,modulos:{},badges:[],desafios:[],iniciado:new Date().toISOString(),diasModulos:{},turma:''};
+    state={nome:'',xp:0,modulos:{},badges:[],desafios:[],iniciado:new Date().toISOString(),diasModulos:{},turma:'',tempoTotalMin:0};
     show('splash');
   }
 }
@@ -871,7 +882,7 @@ function renderDash(){
   const tp=tq.length*6;
   document.getElementById('stat-ac').textContent=tp>0?Math.round(ta/tp*100)+'%':'0%';
   document.getElementById('stat-bd').textContent=state.badges.length;
-  renderDesafios();renderModulos();renderBadges();
+  renderDesafios();renderModulos();renderBadges();atualizarBotaoCertificadoInsignias();
 }
 
 function renderDesafios(){
@@ -1123,6 +1134,7 @@ function mostrarResultado(){
     var _mEnv=TRILHA.find(function(x){return x.id===quiz.moduloId;});
     if(_mEnv){
       var _tempo=Math.round((Date.now()-quiz.inicio)/60000);
+      state.tempoTotalMin=(state.tempoTotalMin||0)+_tempo;salvar();
       var _msEnv=state.modulos[quiz.moduloId]||{};
       _enviarModulo(quiz.moduloId,quiz.acertos,quiz.questoes.length,_tempo,_msEnv.tentativas||1,_pctFinal>=75);
     }
@@ -1255,21 +1267,41 @@ function _enviarSessaoFim(){
 
 // compartilharXP definida abaixo com integração Sheets
 
-function renderRanking(){
+function renderRanking(turmaEscolhida){
   const l=document.getElementById('ranking-list');
   l.innerHTML='<div class="ranking-empty">Carregando...</div>';
   fetch(SHEETS_URL,{cache:'no-store',redirect:'follow'})
     .then(r=>r.json())
     .then(allData=>{
-      // Filtra só a turma ativa (registros sem turma = turmas antigas, não aparecem)
-      // Filtra por turma — se dado não tem turma OU turma bate, inclui
+      // Monta a lista de turmas disponíveis (ignora registros sem nome/turma vazia = lixo de teste)
+      const turmasSet=[...new Set(allData.filter(x=>x.nome&&x.turma).map(x=>x.turma))].sort();
+      const sel=document.getElementById('ranking-turma-select');
+      const turmaAtualSel=turmaEscolhida||sel.value||TURMA_ATIVA;
+      sel.innerHTML='';
+      turmasSet.forEach(function(t){
+        const opt=document.createElement('option');opt.value=t;opt.textContent=t;
+        if(t===turmaAtualSel)opt.selected=true;
+        sel.appendChild(opt);
+      });
+      const optTodas=document.createElement('option');optTodas.value='__todas__';optTodas.textContent='Todas as turmas';
+      if(turmaAtualSel==='__todas__')optTodas.selected=true;
+      sel.appendChild(optTodas);
+      if(!turmasSet.includes(turmaAtualSel)&&turmaAtualSel!=='__todas__'){
+        // turma ativa ainda não tem ninguém publicado — mantém selecionada mesmo assim
+        const opt=document.createElement('option');opt.value=turmaAtualSel;opt.textContent=turmaAtualSel;opt.selected=true;
+        sel.insertBefore(opt,sel.firstChild);
+      }
+      const turmaFiltro=sel.value;
+      // Filtro CORRETO: só entra quem tem nome preenchido e cuja turma bate exatamente
+      // (registros de teste sem turma preenchida NUNCA aparecem em nenhum filtro)
       const data=allData.filter(x=>{
-        var t=x.turma||'';
-        return t===''||t===TURMA_ATIVA;
+        if(!x.nome)return false;
+        if(turmaFiltro==='__todas__')return true;
+        return x.turma===turmaFiltro;
       });
       data.sort((a,b)=>b.xp-a.xp);
       l.innerHTML='';
-      if(data.length===0){l.innerHTML='<div class="ranking-empty">Nenhum resultado publicado ainda.</div>';return;}
+      if(data.length===0){l.innerHTML='<div class="ranking-empty">Nenhum resultado publicado ainda para essa turma.</div>';return;}
       data.forEach((x,i)=>{
         const div=document.createElement('div');
         const eu=x.nome===state.nome;
@@ -1503,13 +1535,53 @@ function mostrarCertificado(){
   show('certificado-screen');setTimeout(confetes,400);
 }
 
-function abrirCertificadoHTML(){
-  const data=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-  const marcos=BADGES_DEF.filter(b=>state.badges.includes(b.id));
-  const marcosHtml=marcos.map(b=>'<div class="mi"><div class="me">'+b.emoji+'</div><div class="mn">'+b.nome+'</div></div>').join('');
-  const w=window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Certificado — '+state.nome+'</title><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;700;800;900&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:"Poppins",sans-serif;background:#0D0D0D;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:40px;flex-direction:column;gap:20px;}.cert{background:linear-gradient(135deg,#1B2340,#1e2847);border:1.5px solid rgba(212,168,67,0.4);border-radius:24px;padding:52px;max-width:720px;width:100%;}.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px;}.aca{font-size:11px;font-weight:700;letter-spacing:0.15em;color:#E8532A;text-transform:uppercase;}.mote{font-size:14px;font-weight:300;color:rgba(255,255,255,0.5);font-style:italic;text-align:center;margin-bottom:6px;}.declara{font-size:12px;color:rgba(255,255,255,0.35);text-align:center;margin-bottom:16px;}.nome{font-size:42px;font-weight:900;color:#fff;letter-spacing:-0.02em;text-align:center;margin-bottom:8px;}.cargo{font-size:14px;font-weight:700;color:#E8532A;text-align:center;margin-bottom:14px;}.texto{font-size:12px;color:rgba(255,255,255,0.55);text-align:center;line-height:1.9;margin-bottom:20px;}.sep{width:50px;height:2px;background:#E8532A;margin:0 auto 20px;}.marcos-t{font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.3);text-align:center;margin-bottom:12px;}.marcos{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px;}.mi{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 10px;background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.2);border-radius:8px;}.me{font-size:20px;}.mn{font-size:8px;font-weight:700;color:#D4A843;text-transform:uppercase;letter-spacing:0.05em;text-align:center;}.footer{display:flex;justify-content:space-between;align-items:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08);}.data{font-size:10px;color:rgba(255,255,255,0.3);}.xptotal{font-size:11px;font-weight:700;color:#D4A843;}.print-btn{background:#D4A843;color:#1A1000;border:none;padding:13px 28px;border-radius:10px;font-family:"Poppins",sans-serif;font-size:14px;font-weight:800;cursor:pointer;}@media print{.print-btn{display:none;}}</style></head><body><div class="cert"><div class="header"><div class="aca">Academia de Crescimento</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Arco Educação</div></div><div class="mote">"Você chegou na hora certa."</div><div class="declara">A Academia de Crescimento declara que</div><div class="nome">'+state.nome+'</div><div class="cargo">é oficialmente Consultor(a) Educacional da Arco Educação</div><div class="texto">concluiu com êxito o programa de Embarque da Academia de Crescimento,<br>completando a semana de formação inicial e todas as etapas do onboarding<br>de Consultores Educacionais da Arco Educação.</div><div class="sep"></div><div class="marcos-t">Marcos conquistados</div><div class="marcos">'+marcosHtml+'</div><div class="footer"><div class="data">Emitido em '+data+'</div><div class="xptotal">'+state.xp+' XP conquistados</div></div></div><button class="print-btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button></body></html>');
-  w.document.close();
+function trilhaCompleta(){
+  return TRILHA.filter(function(x){return !x.extra;}).every(function(x){return state.modulos[x.id]&&state.modulos[x.id].concluido;});
+}
+
+function baixarCertificadoPDF(){
+  const el=document.getElementById('cert-card');
+  if(!el){return;}
+  const btns=document.querySelectorAll('.btn-cert,.btn-cert-mini');
+  btns.forEach(function(b){b.disabled=true;b.dataset._txt=b.textContent;b.textContent='Gerando PDF...';});
+  html2canvas(el,{backgroundColor:'#1B2340',scale:2,useCORS:true}).then(function(canvas){
+    const imgData=canvas.toDataURL('image/png');
+    const nomeArq='certificado-'+(state.nome||'certificado').trim().replace(/\s+/g,'_')+'.pdf';
+    try{
+      const {jsPDF}=window.jspdf;
+      const orient=canvas.width>canvas.height?'landscape':'portrait';
+      const pdf=new jsPDF({orientation:orient,unit:'px',format:[canvas.width,canvas.height]});
+      pdf.addImage(imgData,'PNG',0,0,canvas.width,canvas.height);
+      pdf.save(nomeArq);
+    }catch(e){
+      const a=document.createElement('a');
+      a.href=imgData;a.download=nomeArq.replace('.pdf','.png');a.click();
+    }
+    btns.forEach(function(b){b.disabled=false;b.textContent=b.dataset._txt;});
+  }).catch(function(){
+    btns.forEach(function(b){b.disabled=false;b.textContent=b.dataset._txt;});
+    alert('Não foi possível gerar o PDF. Tente novamente.');
+  });
+}
+
+function baixarCertificadoInsignias(){
+  if(!trilhaCompleta())return;
+  mostrarCertificado();
+  setTimeout(baixarCertificadoPDF,700);
+}
+
+function atualizarBotaoCertificadoInsignias(){
+  const btn=document.getElementById('btn-baixar-cert-badges');
+  if(!btn)return;
+  if(trilhaCompleta()){
+    btn.disabled=false;
+    btn.textContent='⬇ Baixar Certificado (PDF)';
+    btn.classList.add('desbloqueado');
+  }else{
+    btn.disabled=true;
+    btn.textContent='🔒 Baixar Certificado (conclua a trilha)';
+    btn.classList.remove('desbloqueado');
+  }
 }
 
 function confetes(){
@@ -1969,7 +2041,8 @@ compartilharXP = function() {
     pct:pct,
     insignias:insignias,
     certificado:certificado,
-    tentativas:tentativas
+    tentativas:tentativas,
+    tempoTotal:state.tempoTotalMin||0
   };
   fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(entry)})
     .then(function(){
@@ -1995,8 +2068,6 @@ renderDash = function() {
     hdr.insertBefore(btn,hdr.querySelector('.btn-sm'));
   }
 };
-
-
 </script>
 </body>
 </html>
