@@ -501,6 +501,10 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--ink);min-
       <label style="font-size:11px;color:var(--ink2)">Filtrar por turma</label>
       <select id="ranking-turma-select" onchange="renderRanking(this.value)" style="width:100%;padding:10px;border-radius:8px;background:var(--surface);color:var(--ink);border:1px solid var(--border2);font-family:'Poppins',sans-serif"></select>
     </div>
+    <div class="form-group" style="text-align:left;margin:12px 0">
+      <label style="font-size:11px;color:var(--ink2)">Filtrar por período (cadastro)</label>
+      <select id="ranking-periodo-select" onchange="renderRanking()" style="width:100%;padding:10px;border-radius:8px;background:var(--surface);color:var(--ink);border:1px solid var(--border2);font-family:'Poppins',sans-serif"></select>
+    </div>
     <div class="ranking-list" id="ranking-list"></div>
     <button class="btn-back" onclick="showDash()">← Voltar</button>
   </div>
@@ -1267,6 +1271,14 @@ function _enviarSessaoFim(){
 
 // compartilharXP definida abaixo com integração Sheets
 
+function _mesAnoDe(dataStr){
+  // dataStr vem como DD/MM/AAAA (pt-BR). Retorna "MM/AAAA" ou '' se inválida.
+  if(!dataStr||typeof dataStr!=='string')return'';
+  const p=dataStr.split('/');
+  if(p.length!==3)return'';
+  return p[1]+'/'+p[2];
+}
+
 function renderRanking(turmaEscolhida){
   const l=document.getElementById('ranking-list');
   l.innerHTML='<div class="ranking-empty">Carregando...</div>';
@@ -1275,33 +1287,57 @@ function renderRanking(turmaEscolhida){
     .then(allData=>{
       // Monta a lista de turmas disponíveis (ignora registros sem nome/turma vazia = lixo de teste)
       const turmasSet=[...new Set(allData.filter(x=>x.nome&&x.turma).map(x=>x.turma))].sort();
-      const sel=document.getElementById('ranking-turma-select');
-      const turmaAtualSel=turmaEscolhida||sel.value||TURMA_ATIVA;
-      sel.innerHTML='';
+      const selTurma=document.getElementById('ranking-turma-select');
+      const turmaAtualSel=turmaEscolhida||selTurma.value||TURMA_ATIVA;
+      selTurma.innerHTML='';
       turmasSet.forEach(function(t){
         const opt=document.createElement('option');opt.value=t;opt.textContent=t;
         if(t===turmaAtualSel)opt.selected=true;
-        sel.appendChild(opt);
+        selTurma.appendChild(opt);
       });
       const optTodas=document.createElement('option');optTodas.value='__todas__';optTodas.textContent='Todas as turmas';
       if(turmaAtualSel==='__todas__')optTodas.selected=true;
-      sel.appendChild(optTodas);
+      selTurma.appendChild(optTodas);
       if(!turmasSet.includes(turmaAtualSel)&&turmaAtualSel!=='__todas__'){
         // turma ativa ainda não tem ninguém publicado — mantém selecionada mesmo assim
         const opt=document.createElement('option');opt.value=turmaAtualSel;opt.textContent=turmaAtualSel;opt.selected=true;
-        sel.insertBefore(opt,sel.firstChild);
+        selTurma.insertBefore(opt,selTurma.firstChild);
       }
-      const turmaFiltro=sel.value;
+      const turmaFiltro=selTurma.value;
+
+      // Monta a lista de períodos (mês/ano da DATA_CADASTRO)
+      const selPeriodo=document.getElementById('ranking-periodo-select');
+      const periodoAtualSel=selPeriodo.value||'__todos__';
+      const periodosSet=[...new Set(allData.map(x=>_mesAnoDe(x.dataCadastro)).filter(Boolean))]
+        .sort(function(a,b){
+          const [ma,aa]=a.split('/');const [mb,ab]=b.split('/');
+          return (aa+ma)<(ab+mb)?1:-1; // mais recente primeiro
+        });
+      selPeriodo.innerHTML='';
+      const optTodosP=document.createElement('option');optTodosP.value='__todos__';optTodosP.textContent='Todos os períodos';
+      if(periodoAtualSel==='__todos__')optTodosP.selected=true;
+      selPeriodo.appendChild(optTodosP);
+      const MESES=['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      periodosSet.forEach(function(p){
+        const [mm,aa]=p.split('/');
+        const opt=document.createElement('option');opt.value=p;
+        opt.textContent=(MESES[parseInt(mm,10)]||mm)+'/'+aa;
+        if(p===periodoAtualSel)opt.selected=true;
+        selPeriodo.appendChild(opt);
+      });
+      const periodoFiltro=selPeriodo.value;
+
       // Filtro CORRETO: só entra quem tem nome preenchido e cuja turma bate exatamente
       // (registros de teste sem turma preenchida NUNCA aparecem em nenhum filtro)
       const data=allData.filter(x=>{
         if(!x.nome)return false;
-        if(turmaFiltro==='__todas__')return true;
-        return x.turma===turmaFiltro;
+        if(turmaFiltro!=='__todas__'&&x.turma!==turmaFiltro)return false;
+        if(periodoFiltro!=='__todos__'&&_mesAnoDe(x.dataCadastro)!==periodoFiltro)return false;
+        return true;
       });
       data.sort((a,b)=>b.xp-a.xp);
       l.innerHTML='';
-      if(data.length===0){l.innerHTML='<div class="ranking-empty">Nenhum resultado publicado ainda para essa turma.</div>';return;}
+      if(data.length===0){l.innerHTML='<div class="ranking-empty">Nenhum resultado publicado ainda para esse filtro.</div>';return;}
       data.forEach((x,i)=>{
         const div=document.createElement('div');
         const eu=x.nome===state.nome;
